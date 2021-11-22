@@ -1,1 +1,1 @@
-# quantum-triple-loss
+# quantum-triplet-loss
