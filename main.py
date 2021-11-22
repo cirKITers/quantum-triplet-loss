@@ -76,9 +76,9 @@ def train():
             a += 1
         if label[0] == 1 and value < 0:
             b += 1
-        if label[0] == 1 and value > 0:
+        if label[0] == 0 and value > 0:
             c += 1
-        if label[0] == 1 and value < 0:
+        if label[0] == 0 and value < 0:
             d += 1
 
 
