@@ -4,25 +4,27 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 from maskit.datasets import load_data
 
-
-np.random.seed(1337)
-random.seed(1337)
+SEED = 1337
+np.random.seed(SEED)
+random.seed(SEED)
 
 
 WIRES = 4
-LAYERS = 4
-STEPS = 2001
-ALPHA = 1
-TRAIN_SIZE = 1000
-TEST_SIZE = 200
+LAYERS = 5
+STEPS = 5001
+ALPHA = 0.5
+TRAIN_SIZE = 2000
+TEST_SIZE = 400
+TEST_EVERY = 250
+CLASSES = (2, 4, 7, 8)
 
 
 def circuit(params, data):
     qml.templates.embeddings.AngleEmbedding(
-        features=data, wires=range(WIRES), rotation="X"
-    )
+            features=data, wires=range(WIRES), rotation="X"
+        )  
 
-    for layer in range(LAYERS):
+    for layer in range(LAYERS): 
         for wire in range(WIRES):
             qml.RX(params[layer][wire][0], wires=wire)
             qml.RY(params[layer][wire][1], wires=wire)
@@ -37,69 +39,69 @@ def triplet_loss(params, qNode, anchor, positive, negative):
     a_value = qNode(params, anchor)
     p_value = qNode(params, positive)
     n_value = qNode(params, negative)
-
+    # print(a_value, p_value, n_value)
     return max(np.linalg.norm(a_value-p_value)**2 - np.linalg.norm(a_value - n_value)**2 + ALPHA, 0.0)
 
 
 def train():
-    dev = qml.device('default.qubit', wires=WIRES, shots=1000)
+    dev = qml.device('default.qubit', wires=WIRES, shots=None)
     qNode = qml.QNode(func=circuit, device=dev)
 
-    optimizer = qml.AdamOptimizer(stepsize=0.001)
+    optimizer = qml.AdamOptimizer(stepsize=0.005)
     def cost_fn(params):
         return triplet_loss(params, qNode, anchor, positive, negative)
     params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, WIRES, 2))
 
-    data = load_data("mnist", shuffle=False, target_length=2, train_size=TRAIN_SIZE, test_size=TEST_SIZE, classes=(6, 9))
-    data_six = []
-    data_nine = []
+    data = load_data("mnist", shuffle=SEED, train_size=TRAIN_SIZE, test_size=TEST_SIZE, classes=CLASSES)
+
+    images = {}
+    for cls in range(len(CLASSES)):
+        images[cls] = []
 
     for index, label in enumerate(data.train_target):
-        if label[0] == 1:
-            data_six.append(data.train_data[index])
-        else:
-            data_nine.append(data.train_data[index])
+        images[np.argmax(label)].append(data.train_data[index])
 
     for s in range(STEPS):
-        if s % 2 == 0:
-            anchor = random.choice(data_six)
-            positive = random.choice(data_six)
-            negative = random.choice(data_nine)
-        else:
-            anchor = random.choice(data_nine)
-            positive = random.choice(data_nine)
-            negative = random.choice(data_six)
+        pos, neg = random.sample(range(len(CLASSES)), 2)
+        
+        anchor, positive = random.sample(images[pos], 2)
+        negative = random.choice(images[neg])
 
         params, c = optimizer.step_and_cost(cost_fn, params)
 
         print(s, c)
 
-        if s % 100 == 0:
+        if s % TEST_EVERY == 0:
             plot_test_set(data, qNode, params, s)
 
 
 def plot_test_set(data, qNode, params, s):
-    x_six = []
-    y_six = []
-    x_nine = []
-    y_nine = []
+    colors = ["darkred", "blue", "green", "orange", "black", "lightblue", "lightgreen"]
+    images = {}
+    plt.rcParams["figure.figsize"] = (6,6)
+
+    for cls in range(len(CLASSES)):
+        images[cls] = []
+
     for label, datum in zip(data.test_target, data.test_data):
         values = qNode(params, datum)
-        if label[0] == 1:
-            x_six.append(values[0])
-            y_six.append(values[1])
-        else:
-            x_nine.append(values[0])
-            y_nine.append(values[1])
+        images[np.argmax(label)].append(values)
 
-    plt.rcParams["figure.figsize"] = (6,6)
-    plt.scatter(x_six, y_six, color="red")
-    plt.scatter(x_nine, y_nine, color="blue")
+    for index, (cls, values) in enumerate(images.items()):
+        x = []
+        y = []
+        for value in values:
+            x.append(value[0])
+            y.append(value[1])
+
+        plt.scatter(x, y, color=colors.pop(0), alpha=0.6, label=str(CLASSES[index]))
+    
     plt.title("step " + str(s))
     plt.ylim(-1, 1)
     plt.xlim(-1, 1)
-    plt.savefig("./images/" + str(s) + ".png")
+    plt.legend()
     # plt.show()
+    plt.savefig("./images/" + str(s) + ".png")
     plt.clf()
 
 
