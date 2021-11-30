@@ -15,7 +15,7 @@ def distances_between_centers(centers):
 def davies_bouldin_index(n, values, c_distances):
     dbi = 0
     for i in range(n):
-        fraction = []
+        fractions = []
         rows = np.where(values[:, 0] == i)
         sigma_i = np.average(values[rows][:, 3])
         for j in range(n):
@@ -26,11 +26,11 @@ def davies_bouldin_index(n, values, c_distances):
 
             d = c_distances[i, j]
 
-            fraction.append((sigma_i + sigma_j) / d)
+            fractions.append((sigma_i + sigma_j) / d)
 
-        dbi += max(fraction)
+        dbi += max(fractions)
 
-    return float(dbi)
+    return float(dbi) / n
 
 
 def plot(classes, values, centers, step, show=False, save=True):
