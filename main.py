@@ -3,7 +3,7 @@ import pennylane as qml
 from pennylane import numpy as np
 from maskit.datasets import load_data
 from collections import Counter
-from utils import davies_bouldin_index, distances_between_centers, plot
+from utils import davies_bouldin_index, distances_between_centers, plot_2d, plot_3d
 
 
 SEED = 1337
@@ -15,18 +15,20 @@ WIRES = 4
 LAYERS = 5
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 6)
+CLASSES = (3, 4, 6)
 
 STEPS = 5001
 TEST_EVERY = 250
 
 START_STEPSIZE = 0.01
-UPDATE_SZ_EVERY = 1000
+UPDATE_SZ_EVERY = 2000
 SZ_FACTOR = 0.5
 
-START_ALPHA = 1
-UPDATE_ALPHA_EVERY = 3000
-ALPHA_FACTOR = 0.5
+START_ALPHA = 3
+UPDATE_ALPHA_EVERY = 5002
+ALPHA_FACTOR = 1
+
+OUTPUT_QUBITS = 3
 
 
 def circuit(params, data):
@@ -42,7 +44,7 @@ def circuit(params, data):
             qml.CZ(wires=[wire, wire + 1])
         for wire in range(1, WIRES - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    return qml.expval(qml.PauliZ(0)), qml.expval(qml.PauliZ(1))
+    return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -117,25 +119,25 @@ def evaluate(data, qNode, params, step, show=False, save=True):
 
     # this will store:
     # label (0 - len(CLASSES)), x_output, y_output, distance_to_center
-    values = np.zeros((len(data.test_target), 4))
+    values = np.zeros((len(data.test_target), OUTPUT_QUBITS+2))
 
     # store label and output
     for index, (label, datum) in enumerate(zip(data.test_target, data.test_data)):
         output = qNode(params, datum)
         values[index, 0] = np.argmax(label)
-        values[index, 1] = output[0]
-        values[index, 2] = output[1]
+        for i in range(len(output)):
+            values[index, 1+i] = output[i]
 
     # calculate centers, key is label
     centers = {}
     for cls in range(len(CLASSES)):
         rows = np.where(values[:, 0] == cls)
-        center = np.average(values[rows][:, 1:3], axis=0)
+        center = np.average(values[rows][:, 1:(1+OUTPUT_QUBITS)], axis=0)
         centers[cls] = center
 
     # calculate distance to center
     for i in range(len(data.test_target)):
-        values[i, 3] = np.linalg.norm(values[i, 1:3] - centers[int(values[i, 0])])
+        values[i, -1] = np.linalg.norm(values[i, 1:(1+OUTPUT_QUBITS)] - centers[int(values[i, 0])])
 
     c_distances = distances_between_centers(centers)
     print("Distances between centers\n", c_distances)
@@ -143,7 +145,10 @@ def evaluate(data, qNode, params, step, show=False, save=True):
     dbi = davies_bouldin_index(len(CLASSES), values, c_distances)
     print("Davies Bouldin Index:", dbi)
 
-    plot(CLASSES, values, centers, step, show, save)
+    if OUTPUT_QUBITS == 2:
+        plot_2d(CLASSES, values, centers, step, show, save)
+    elif OUTPUT_QUBITS == 3:
+        plot_3d(CLASSES, values, centers, step, show, save)
 
     return dbi
 
