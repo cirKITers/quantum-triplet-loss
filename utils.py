@@ -13,24 +13,21 @@ def distances_between_centers(centers):
 
 
 def davies_bouldin_index(n, values, c_distances):
-    dbi = 0
+    intra_cls_distances = np.zeros((n))
+    for i in range(n):
+        rows = np.where(values[:, 0] == i)
+        intra_cls_distances[i] = np.average(values[rows][:, -1])
+    dbis = []
     for i in range(n):
         fractions = []
-        rows = np.where(values[:, 0] == i)
-        sigma_i = np.average(values[rows][:, -1])
         for j in range(n):
             if i == j:
                 continue
-            rows = np.where(values[:, 0] == j)
-            sigma_j = np.average(values[rows][:, -1])
-
             d = c_distances[i, j]
-
-            fractions.append((sigma_i + sigma_j) / d)
-
-        dbi += max(fractions)
-
-    return float(dbi) / n
+            fractions.append((intra_cls_distances[i] +
+                              intra_cls_distances[j]) / d)
+        dbis.append(max(fractions))
+    return float(np.average(dbis))
 
 
 def plot_2d(classes, values, centers, step, show=False, save=True):
@@ -60,6 +57,7 @@ def plot_2d(classes, values, centers, step, show=False, save=True):
     if save:
         plt.savefig("./images/" + str(step) + ".png")
     plt.clf()
+
 
 def plot_3d(classes, values, centers, step, show=False, save=True):
     colors = [("tomato",  "red"),
