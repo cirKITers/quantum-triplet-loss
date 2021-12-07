@@ -12,12 +12,12 @@ random.seed(SEED)
 
 WIRES = 4
 LAYERS = 5
-TRAIN_SIZE = 2000
+TRAIN_SIZE = 4000
 TEST_SIZE = 400
 CLASSES = (3, 4, 6)
 
 STEPS = 5001
-TEST_EVERY = 250
+TEST_EVERY = 100
 
 START_STEPSIZE = 0.01
 UPDATE_SZ_EVERY = 2000
@@ -28,6 +28,7 @@ UPDATE_ALPHA_EVERY = 5002
 ALPHA_FACTOR = 1
 
 OUTPUT_QUBITS = 2
+BATCH_SIZE = 10
 
 
 def circuit(params, data):
@@ -51,7 +52,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     p_value = qNode(params, positive)
     n_value = qNode(params, negative)
     # print(a_value, p_value, n_value)
-    return max((np.linalg.norm(a_value-p_value)**2 -
+    return max((np.linalg.norm(a_value - p_value)**2 -
                np.linalg.norm(a_value - n_value)**2 + alpha),
                0.0)
 
@@ -86,29 +87,44 @@ def train():
         images[np.argmax(label)].append(data.train_data[index])
 
     dbis = []
-    hard_triplets = []
 
-    for step in range(STEPS):
-        # if len(hard_triplets) > 100 and random.uniform(0, 1) > 0.5:
-        #     print("Using a hard triplet", len(hard_triplets))
-        #     random.shuffle(hard_triplets)
-        #     anchor, positive, negative = hard_triplets.pop()
-        # else: 
-        pos, neg = random.sample(range(len(CLASSES)), 2)
+    step = 0
+    while step < STEPS:
 
-        anchor, positive = random.sample(images[pos], 2)
-        negative = random.choice(images[neg])
+        b_inputs = {}
+        b_outputs = {}
+        for cls in range(len(CLASSES)):
+            inputs = random.sample(images[cls], BATCH_SIZE)
+            outputs = [qNode(params, i) for i in inputs]
+            b_inputs[cls] = inputs
+            b_outputs[cls] = outputs
+
+        triplets = []
+        for a_cls in range(len(CLASSES)):
+            for b in range(BATCH_SIZE):
+                co = b_outputs[a_cls][b]
+                pos = np.argmax([np.linalg.norm(co - x) for x in b_outputs[a_cls]])
+                # pos = random.choice([x for x in range(0,BATCH_SIZE) if x != b])
+
+                for a in range(len(CLASSES)):
+                    if a == a_cls:
+                        continue
+                    neg = np.argmin([np.linalg.norm(co - x) for x in b_outputs[a]])
+                    # neg = random.randint(0, BATCH_SIZE-1)
+                    triplets.append((b_inputs[a_cls][b], b_inputs[a_cls][pos], b_inputs[a][neg]))
+
+        random.shuffle(triplets)
+        while len(triplets) > 0:
+            anchor, positive, negative = triplets.pop()
+            params, c = optimizer.step_and_cost(cost_fn, params)
+
+            print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
+
+            if step % TEST_EVERY == 0:
+                dbi = evaluate(data, qNode, params, step)
+                dbis.append(dbi)
             
-        params, c = optimizer.step_and_cost(cost_fn, params)
-
-        if c > alpha:
-            hard_triplets.append((anchor, positive, negative))
-
-        print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
-
-        if step % TEST_EVERY == 0:
-            dbi = evaluate(data, qNode, params, step)
-            dbis.append(dbi)
+            step += 1
 
         # if (step+1) % UPDATE_SZ_EVERY == 0:
         #     stepsize *= SZ_FACTOR
