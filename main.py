@@ -5,7 +5,6 @@ from maskit.datasets import load_data
 from collections import Counter
 from utils import davies_bouldin_index, distances_between_centers, plot_2d, plot_3d
 
-
 SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
@@ -24,11 +23,11 @@ START_STEPSIZE = 0.01
 UPDATE_SZ_EVERY = 2000
 SZ_FACTOR = 0.5
 
-START_ALPHA = 3
+START_ALPHA = 1.0
 UPDATE_ALPHA_EVERY = 5002
 ALPHA_FACTOR = 1
 
-OUTPUT_QUBITS = 3
+OUTPUT_QUBITS = 2
 
 
 def circuit(params, data):
@@ -44,8 +43,8 @@ def circuit(params, data):
             qml.CZ(wires=[wire, wire + 1])
         for wire in range(1, WIRES - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
-
+    # return [qml.expval(qml.PauliZ(i)) for i in [0, 3]]
+    return qml.expval(qml.PauliZ(0) @ qml.PauliX(1)), qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     a_value = qNode(params, anchor)
@@ -87,14 +86,23 @@ def train():
         images[np.argmax(label)].append(data.train_data[index])
 
     dbis = []
+    hard_triplets = []
 
     for step in range(STEPS):
+        # if len(hard_triplets) > 100 and random.uniform(0, 1) > 0.5:
+        #     print("Using a hard triplet", len(hard_triplets))
+        #     random.shuffle(hard_triplets)
+        #     anchor, positive, negative = hard_triplets.pop()
+        # else: 
         pos, neg = random.sample(range(len(CLASSES)), 2)
 
         anchor, positive = random.sample(images[pos], 2)
         negative = random.choice(images[neg])
-
+            
         params, c = optimizer.step_and_cost(cost_fn, params)
+
+        if c > alpha:
+            hard_triplets.append((anchor, positive, negative))
 
         print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
 
@@ -102,14 +110,14 @@ def train():
             dbi = evaluate(data, qNode, params, step)
             dbis.append(dbi)
 
-        if (step+1) % UPDATE_SZ_EVERY == 0:
-            stepsize *= SZ_FACTOR
-            optimizer.stepsize = stepsize
-            print("Updated stepsize to", stepsize)
+        # if (step+1) % UPDATE_SZ_EVERY == 0:
+        #     stepsize *= SZ_FACTOR
+        #     optimizer.stepsize = stepsize
+        #     print("Updated stepsize to", stepsize)
 
-        if (step+1) % UPDATE_ALPHA_EVERY == 0:
-            alpha *= ALPHA_FACTOR
-            print("Updated alpha to", alpha)
+        # if (step+1) % UPDATE_ALPHA_EVERY == 0:
+        #     alpha *= ALPHA_FACTOR
+        #     print("Updated alpha to", alpha)
 
     print("DBIs:\n", dbis)
     print("Minimum:", min(dbis))
