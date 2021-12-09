@@ -43,8 +43,8 @@ def circuit(params, data):
             qml.CZ(wires=[wire, wire + 1])
         for wire in range(1, WIRES - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    return [qml.expval(qml.PauliZ(i)) for i in [0, 1]]
-    # return qml.expval(qml.PauliZ(0) @ qml.PauliX(1)), qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
+    # return [qml.expval(qml.PauliZ(i)) for i in [0, 1]]
+    return qml.expval(qml.PauliZ(0) @ qml.PauliX(1)), qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     a_value = qNode(params, anchor)
@@ -86,26 +86,17 @@ def train():
         images[np.argmax(label)].append(data.train_data[index])
 
     dbis = []
-    hard_triplets = []
 
     for step in range(STEPS):
-        # if len(hard_triplets) > 100 and random.uniform(0, 1) > 0.5:
-        #     print("Using a hard triplet", len(hard_triplets))
-        #     random.shuffle(hard_triplets)
-        #     anchor, positive, negative = hard_triplets.pop()
-        # else: 
-        if step < 2000:
-            pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.4, 0.4, 0.2])
-        else:
-            pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False)
+        # if step < 2000:
+        #     pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.45, 0.45, 0.1])
+        # else:
+        pos, neg = random.sample(range(len(CLASSES)), 2)
         
         anchor, positive = random.sample(images[int(pos)], 2)
         negative = random.choice(images[int(neg)])
             
         params, c = optimizer.step_and_cost(cost_fn, params)
-
-        if c > alpha:
-            hard_triplets.append((anchor, positive, negative))
 
         print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
 
