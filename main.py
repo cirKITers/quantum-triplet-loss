@@ -45,13 +45,16 @@ def circuit(params, data):
         for wire in range(1, WIRES - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
     # return [qml.expval(qml.PauliZ(i)) for i in [0, 1]]
-    return qml.expval(qml.PauliZ(0) @ qml.PauliX(1)), qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
+    return (qml.expval(qml.PauliZ(0) @ qml.PauliX(1)),
+            qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
+            )
+
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     a_value = qNode(params, anchor)
     p_value = qNode(params, positive)
     n_value = qNode(params, negative)
-    # print(a_value, p_value, n_value)
+
     return max((np.linalg.norm(a_value-p_value)**2 -
                np.linalg.norm(a_value - n_value)**2 + alpha),
                0.0)
@@ -90,14 +93,17 @@ def train():
     dbis = []
 
     for step in range(STEPS):
-        # if step < 2000:
-        #     pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.25, 0.25, 0.25, 0.25])
-        # else:
-        pos, neg = random.sample(range(len(CLASSES)), 2)
-        
+        if step < 2000:
+            pos, neg = np.random.choice(range(len(CLASSES)),
+                                        size=2, replace=False,
+                                        p=[0.25, 0.25, 0.25, 0.25],
+                                        )
+        else:
+            pos, neg = random.sample(range(len(CLASSES)), 2)
+
         anchor, positive = random.sample(images[int(pos)], 2)
         negative = random.choice(images[int(neg)])
-            
+
         params, c = optimizer.step_and_cost(cost_fn, params)
 
         print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
@@ -127,11 +133,13 @@ def train():
 def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
 
     svm = SVC(kernel="linear")
-    clf = svm.fit([qNode(params, x) for x in data.train_data], [np.argmax(x) for x in data.train_target])
+    clf = svm.fit([qNode(params, x) for x in data.train_data],
+                  [np.argmax(x) for x in data.train_target]
+                  )
     test_data = [qNode(params, x) for x in data.test_data]
     test_target = [np.argmax(x) for x in data.test_target]
     accuracy = clf.score(test_data, test_target)
-    
+
     print("Accuracy", accuracy)
 
     # this will store:
@@ -154,7 +162,8 @@ def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
 
     # calculate distance to center
     for i in range(len(data.test_target)):
-        values[i, -1] = np.linalg.norm(values[i, 1:(1+OUTPUT_QUBITS)] - centers[int(values[i, 0])])
+        values[i, -1] = np.linalg.norm(values[i, 1:(1+OUTPUT_QUBITS)]
+                                       - centers[int(values[i, 0])])
 
     c_distances = distances_between_centers(centers)
     print("Distances between centers\n", c_distances)

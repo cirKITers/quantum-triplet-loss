@@ -90,9 +90,9 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
 
         marker_color, center_color = colors.pop(0)
         ax.scatter(values[rows][:, 1], values[rows][:, 2], values[rows][:, 3],
-                    color=marker_color, alpha=0.4, label=str(classes[index]))
+                   color=marker_color, alpha=0.4, label=str(classes[index]))
         ax.plot(center[0], center[1], center[2], color=center_color,
-                 alpha=0.9, ms=13, marker="*", markeredgecolor="black")
+                alpha=0.9, ms=13, marker="*", markeredgecolor="black")
 
     plt.title(f"Step: {step} | Acc: {accuracy:.2f} | DBI: {dbi:.3f}")
     ax.set_xlim([-1, 1])
