@@ -15,7 +15,7 @@ WIRES = 4
 LAYERS = 5
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 4, 6)
+CLASSES = (3, 6)
 
 STEPS = 5001
 TEST_EVERY = 250
@@ -90,10 +90,10 @@ def train():
     dbis = []
 
     for step in range(STEPS):
-        if step < 2000:
-            pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.40, 0.40, 0.2])
-        else:
-            pos, neg = random.sample(range(len(CLASSES)), 2)
+        # if step < 2000:
+        #     pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.25, 0.25, 0.25, 0.25])
+        # else:
+        pos, neg = random.sample(range(len(CLASSES)), 2)
         
         anchor, positive = random.sample(images[int(pos)], 2)
         negative = random.choice(images[int(neg)])
@@ -107,6 +107,7 @@ def train():
             accuracys.append(accuracy)
             dbis.append(dbi)
             print("Accuracys:\n", accuracys)
+
         # if (step+1) % UPDATE_SZ_EVERY == 0:
         #     stepsize *= SZ_FACTOR
         #     optimizer.stepsize = stepsize
@@ -116,7 +117,6 @@ def train():
         #     alpha *= ALPHA_FACTOR
         #     print("Updated alpha to", alpha)
 
-
     print("Accuracys:\n", accuracys)
     print("Maximum: ", max(accuracys))
 
@@ -124,11 +124,13 @@ def train():
     print("Minimum:", min(dbis))
 
 
-def evaluate(data, qNode, params, step, show=False, save=True):
+def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
 
     svm = SVC(kernel="linear")
     clf = svm.fit([qNode(params, x) for x in data.train_data], [np.argmax(x) for x in data.train_target])
-    accuracy = clf.score([qNode(params, x) for x in data.test_data], [np.argmax(x) for x in data.test_target])
+    test_data = [qNode(params, x) for x in data.test_data]
+    test_target = [np.argmax(x) for x in data.test_target]
+    accuracy = clf.score(test_data, test_target)
     
     print("Accuracy", accuracy)
 
@@ -161,9 +163,9 @@ def evaluate(data, qNode, params, step, show=False, save=True):
     print("Davies Bouldin Index:", dbi)
 
     if OUTPUT_QUBITS == 2:
-        plot_2d(CLASSES, values, centers, step, clf, show, save)
+        plot_2d(CLASSES, values, centers, step, clf, accuracy, dbi, show, save, cont)
     elif OUTPUT_QUBITS == 3:
-        plot_3d(CLASSES, values, centers, step, show, save)
+        plot_3d(CLASSES, values, centers, step, accuracy, dbi, show, save)
 
     return accuracy, dbi
 

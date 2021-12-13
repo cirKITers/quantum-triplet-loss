@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 
 
+GG = 100
+
+
 def distances_between_centers(centers):
     c_distances = np.zeros((len(centers), len(centers)))
     for i, v_1 in enumerate(centers.values()):
@@ -30,7 +33,7 @@ def davies_bouldin_index(n, values, c_distances):
     return float(np.average(dbis))
 
 
-def plot_2d(classes, values, centers, step, clf, show=False, save=True):
+def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save=True, cont=True):
     colors = [("tomato",  "red"),
               ("deepskyblue", "blue"),
               ("chartreuse", "green"),
@@ -48,16 +51,21 @@ def plot_2d(classes, values, centers, step, clf, show=False, save=True):
         plt.plot(center[0], center[1], color=center_color,
                  alpha=0.9, ms=13, marker="*", markeredgecolor="black")
 
-    # w = clf.coef_[0]
-    # b = clf.intercept_[0]
-    # x_points = np.linspace(-1, 1)
-    # y_points = -(w[0] / w[1]) * x_points - b / w[1]
-    # plt.plot(x_points, y_points, c="black", linewidth=3)
+    if cont:
+        grid = np.linspace(-1, 1, GG)
+        xx, yy = np.meshgrid(grid, grid)
 
-    plt.title("step " + str(step))
+        zz = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+        zz = zz.reshape(xx.shape)
+
+        ax = plt.gca()
+        ax.contour(xx, yy, zz, len(classes)-2, colors='black')
+
+    plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
     plt.ylim(-1, 1)
     plt.xlim(-1, 1)
     plt.legend()
+
     if show:
         plt.show()
     if save:
@@ -65,7 +73,7 @@ def plot_2d(classes, values, centers, step, clf, show=False, save=True):
     plt.clf()
 
 
-def plot_3d(classes, values, centers, step, show=False, save=True):
+def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True):
     colors = [("tomato",  "red"),
               ("deepskyblue", "blue"),
               ("chartreuse", "green"),
@@ -86,7 +94,7 @@ def plot_3d(classes, values, centers, step, show=False, save=True):
         ax.plot(center[0], center[1], center[2], color=center_color,
                  alpha=0.9, ms=13, marker="*", markeredgecolor="black")
 
-    plt.title("step " + str(step))
+    plt.title(f"Step: {step} | Acc: {accuracy:.2f} | DBI: {dbi:.3f}")
     ax.set_xlim([-1, 1])
     ax.set_ylim([-1, 1])
     ax.set_zlim([-1, 1])
