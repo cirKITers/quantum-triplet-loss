@@ -3,6 +3,7 @@ import pennylane as qml
 from pennylane import numpy as np
 from maskit.datasets import load_data
 from collections import Counter
+from sklearn.svm import SVC
 from utils import davies_bouldin_index, distances_between_centers, plot_2d, plot_3d
 
 SEED = 1337
@@ -85,13 +86,14 @@ def train():
     for index, label in enumerate(data.train_target):
         images[np.argmax(label)].append(data.train_data[index])
 
+    accuracys = []
     dbis = []
 
     for step in range(STEPS):
-        # if step < 2000:
-        #     pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.45, 0.45, 0.1])
-        # else:
-        pos, neg = random.sample(range(len(CLASSES)), 2)
+        if step < 2000:
+            pos, neg = np.random.choice(range(len(CLASSES)), size=2, replace=False, p=[0.40, 0.40, 0.2])
+        else:
+            pos, neg = random.sample(range(len(CLASSES)), 2)
         
         anchor, positive = random.sample(images[int(pos)], 2)
         negative = random.choice(images[int(neg)])
@@ -101,9 +103,10 @@ def train():
         print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
 
         if step % TEST_EVERY == 0:
-            dbi = evaluate(data, qNode, params, step)
+            accuracy, dbi = evaluate(data, qNode, params, step)
+            accuracys.append(accuracy)
             dbis.append(dbi)
-
+            print("Accuracys:\n", accuracys)
         # if (step+1) % UPDATE_SZ_EVERY == 0:
         #     stepsize *= SZ_FACTOR
         #     optimizer.stepsize = stepsize
@@ -113,11 +116,21 @@ def train():
         #     alpha *= ALPHA_FACTOR
         #     print("Updated alpha to", alpha)
 
+
+    print("Accuracys:\n", accuracys)
+    print("Maximum: ", max(accuracys))
+
     print("DBIs:\n", dbis)
     print("Minimum:", min(dbis))
 
 
 def evaluate(data, qNode, params, step, show=False, save=True):
+
+    svm = SVC(kernel="linear")
+    clf = svm.fit([qNode(params, x) for x in data.train_data], [np.argmax(x) for x in data.train_target])
+    accuracy = clf.score([qNode(params, x) for x in data.test_data], [np.argmax(x) for x in data.test_target])
+    
+    print("Accuracy", accuracy)
 
     # this will store:
     # label (0 - len(CLASSES)), x_output, y_output, distance_to_center
@@ -148,11 +161,11 @@ def evaluate(data, qNode, params, step, show=False, save=True):
     print("Davies Bouldin Index:", dbi)
 
     if OUTPUT_QUBITS == 2:
-        plot_2d(CLASSES, values, centers, step, show, save)
+        plot_2d(CLASSES, values, centers, step, clf, show, save)
     elif OUTPUT_QUBITS == 3:
         plot_3d(CLASSES, values, centers, step, show, save)
 
-    return dbi
+    return accuracy, dbi
 
 
 if __name__ == "__main__":

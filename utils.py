@@ -30,7 +30,7 @@ def davies_bouldin_index(n, values, c_distances):
     return float(np.average(dbis))
 
 
-def plot_2d(classes, values, centers, step, show=False, save=True):
+def plot_2d(classes, values, centers, step, clf, show=False, save=True):
     colors = [("tomato",  "red"),
               ("deepskyblue", "blue"),
               ("chartreuse", "green"),
@@ -47,6 +47,12 @@ def plot_2d(classes, values, centers, step, show=False, save=True):
                     color=marker_color, alpha=0.4, label=str(classes[index]))
         plt.plot(center[0], center[1], color=center_color,
                  alpha=0.9, ms=13, marker="*", markeredgecolor="black")
+
+    # w = clf.coef_[0]
+    # b = clf.intercept_[0]
+    # x_points = np.linspace(-1, 1)
+    # y_points = -(w[0] / w[1]) * x_points - b / w[1]
+    # plt.plot(x_points, y_points, c="black", linewidth=3)
 
     plt.title("step " + str(step))
     plt.ylim(-1, 1)
