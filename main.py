@@ -93,13 +93,13 @@ def train():
     dbis = []
 
     for step in range(STEPS):
-        if step < 2000:
-            pos, neg = np.random.choice(range(len(CLASSES)),
-                                        size=2, replace=False,
-                                        p=[0.25, 0.25, 0.25, 0.25],
-                                        )
-        else:
-            pos, neg = random.sample(range(len(CLASSES)), 2)
+        # if step < 2000:
+        #     pos, neg = np.random.choice(range(len(CLASSES)),
+        #                                 size=2, replace=False,
+        #                                 p=[0.25, 0.25, 0.25, 0.25],
+        #                                 )
+        # else:
+        pos, neg = random.sample(range(len(CLASSES)), 2)
 
         anchor, positive = random.sample(images[int(pos)], 2)
         negative = random.choice(images[int(neg)])
