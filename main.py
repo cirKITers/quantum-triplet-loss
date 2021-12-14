@@ -11,43 +11,42 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 
-WIRES = 4
+QUBITS = 4
+DATA_QUBITS = 4
+OUTPUT_QUBITS = 2
 LAYERS = 5
+
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 6)
+CLASSES = (3, 4, 6)
 
-STEPS = 5001
+STEPS = 7501
 TEST_EVERY = 250
 
-START_STEPSIZE = 0.01
-UPDATE_SZ_EVERY = 2000
-SZ_FACTOR = 0.5
+START_STEPSIZE = 0.005
+UPDATE_SZ_EVERY = 35000
+SZ_FACTOR = 0.1
 
 START_ALPHA = 1.0
-UPDATE_ALPHA_EVERY = 5002
+UPDATE_ALPHA_EVERY = 100000
 ALPHA_FACTOR = 1
-
-OUTPUT_QUBITS = 2
 
 
 def circuit(params, data):
     qml.templates.embeddings.AngleEmbedding(
-            features=data, wires=range(WIRES), rotation="X"
+            features=data, wires=range(DATA_QUBITS), rotation="X"
         )
 
     for layer in range(LAYERS):
-        for wire in range(WIRES):
+        for wire in range(QUBITS):
             qml.RX(params[layer][wire][0], wires=wire)
             qml.RY(params[layer][wire][1], wires=wire)
-        for wire in range(0, WIRES - 1, 2):
+        for wire in range(0, QUBITS - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-        for wire in range(1, WIRES - 1, 2):
+        for wire in range(1, QUBITS - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
     # return [qml.expval(qml.PauliZ(i)) for i in [0, 1]]
-    return (qml.expval(qml.PauliZ(0) @ qml.PauliX(1)),
-            qml.expval(qml.PauliZ(2) @ qml.PauliX(3))
-            )
+    return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -61,7 +60,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
 
 
 def train():
-    dev = qml.device('default.qubit', wires=WIRES, shots=None)
+    dev = qml.device('default.qubit', wires=QUBITS, shots=None)
     qNode = qml.QNode(func=circuit, device=dev)
 
     stepsize = START_STEPSIZE
@@ -70,13 +69,14 @@ def train():
     def cost_fn(params):
         return triplet_loss(params, qNode, anchor, positive, negative, alpha)
 
-    params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, WIRES, 2))
+    params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, QUBITS, 2))
     alpha = START_ALPHA
 
     data = load_data("mnist", shuffle=SEED,
                      train_size=TRAIN_SIZE,
                      test_size=TEST_SIZE,
-                     classes=CLASSES)
+                     classes=CLASSES,
+                     wires=DATA_QUBITS)
     occurences_train = [np.argmax(x) for x in data.train_target]
     occurences_test = [np.argmax(x) for x in data.test_target]
     print("Train", Counter(occurences_train))
@@ -96,7 +96,7 @@ def train():
         # if step < 2000:
         #     pos, neg = np.random.choice(range(len(CLASSES)),
         #                                 size=2, replace=False,
-        #                                 p=[0.25, 0.25, 0.25, 0.25],
+        #                                 p=[0.4, 0.4, 0.2],
         #                                 )
         # else:
         pos, neg = random.sample(range(len(CLASSES)), 2)
@@ -130,7 +130,7 @@ def train():
     print("Minimum:", min(dbis))
 
 
-def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
+def evaluate(data, qNode, params, step, show=False, save=True, cont=False):
 
     svm = SVC(kernel="linear")
     clf = svm.fit([qNode(params, x) for x in data.train_data],
