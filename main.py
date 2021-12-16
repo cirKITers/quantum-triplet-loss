@@ -11,14 +11,14 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 
-QUBITS = 4
+QUBITS = 6
 DATA_QUBITS = 4
-OUTPUT_QUBITS = 2
+OUTPUT_QUBITS = 3
 LAYERS = 5
 
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 4, 6)
+CLASSES = (3, 4, 6, 9)
 
 STEPS = 7501
 TEST_EVERY = 250
@@ -130,7 +130,7 @@ def train():
     print("Minimum:", min(dbis))
 
 
-def evaluate(data, qNode, params, step, show=False, save=True, cont=False):
+def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
 
     svm = SVC(kernel="linear")
     clf = svm.fit([qNode(params, x) for x in data.train_data],
