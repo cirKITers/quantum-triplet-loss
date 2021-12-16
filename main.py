@@ -4,21 +4,22 @@ from pennylane import numpy as np
 from maskit.datasets import load_data
 from collections import Counter
 from sklearn.svm import SVC
-from utils import davies_bouldin_index, distances_between_centers, plot_2d, plot_3d
+from utils import davies_bouldin_index, distances_between_centers
+from plotting import plot_2d, plot_3d, plot_curves
 
 SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
 
 
-QUBITS = 6
+QUBITS = 4
 DATA_QUBITS = 4
-OUTPUT_QUBITS = 3
+OUTPUT_QUBITS = QUBITS // 2
 LAYERS = 5
 
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 4, 6, 9)
+CLASSES = (3, 6)
 
 STEPS = 7501
 TEST_EVERY = 250
@@ -30,6 +31,8 @@ SZ_FACTOR = 0.1
 START_ALPHA = 1.0
 UPDATE_ALPHA_EVERY = 100000
 ALPHA_FACTOR = 1
+
+SHOTS = None
 
 
 def circuit(params, data):
@@ -60,7 +63,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
 
 
 def train():
-    dev = qml.device('default.qubit', wires=QUBITS, shots=None)
+    dev = qml.device('default.qubit', wires=QUBITS, shots=SHOTS)
     qNode = qml.QNode(func=circuit, device=dev)
 
     stepsize = START_STEPSIZE
@@ -91,6 +94,8 @@ def train():
 
     accuracys = []
     dbis = []
+    losses = []
+    current_losses = []
 
     for step in range(STEPS):
         # if step < 2000:
@@ -108,10 +113,15 @@ def train():
 
         print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
 
+        current_losses.append(c)
+        if len(current_losses) > 24:
+            losses.append((step, np.average(current_losses)))
+            current_losses = []
+
         if step % TEST_EVERY == 0:
             accuracy, dbi = evaluate(data, qNode, params, step)
-            accuracys.append(accuracy)
-            dbis.append(dbi)
+            accuracys.append((step, accuracy))
+            dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
 
         # if (step+1) % UPDATE_SZ_EVERY == 0:
@@ -128,6 +138,12 @@ def train():
 
     print("DBIs:\n", dbis)
     print("Minimum:", min(dbis))
+
+    plot_curves(np.array(accuracys), 
+                np.array(dbis), 
+                np.array(losses), 
+                f"Qubits: {QUBITS}, Layers: {LAYERS}, Classes: {CLASSES}, Output_dim: {OUTPUT_QUBITS}"
+                )
 
 
 def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
