@@ -94,7 +94,7 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
         ax.plot(center[0], center[1], center[2], color=center_color,
                 alpha=0.9, ms=13, marker="*", markeredgecolor="black")
 
-    plt.title(f"Step: {step} | Acc: {accuracy:.2f} | DBI: {dbi:.3f}")
+    plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
     ax.set_xlim([-1, 1])
     ax.set_ylim([-1, 1])
     ax.set_zlim([-1, 1])
