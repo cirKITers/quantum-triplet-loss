@@ -12,7 +12,7 @@ def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save
               ("gold", "orange"),
               ("violet", "fuchsia"),
               ]
-    plt.rcParams["figure.figsize"] = (6, 6)
+    plt.figure(figsize=(6,6))
 
     for index, center in enumerate(centers.values()):
         rows = np.where(values[:, 0] == index)
@@ -42,7 +42,7 @@ def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save
         plt.show()
     if save:
         plt.savefig("./images/" + str(step) + ".png")
-    plt.clf()
+    plt.close()
 
 
 def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True):
@@ -75,11 +75,11 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
         plt.show()
     if save:
         plt.savefig("./images/" + str(step) + ".png")
-    plt.clf()
+    plt.close()
 
 
 def plot_curves(accuracys, dbis, loss, title):
-    plt.rcParams["figure.figsize"] = (12, 8)
+    plt.figure(figsize=(12,8))
     plt.plot(accuracys[:, 0], accuracys[:, 1], label="Accuracy")
     plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
     plt.plot(loss[:, 0], loss[:, 1], label="Loss")
