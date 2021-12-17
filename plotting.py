@@ -84,6 +84,6 @@ def plot_curves(accuracys, dbis, loss, title):
     plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
     plt.plot(loss[:, 0], loss[:, 1], label="Loss")
     plt.title(title)
-    plt.ylim(ymax = 1)
+    plt.ylim(ymax = 3)
     plt.legend()
     plt.show()
