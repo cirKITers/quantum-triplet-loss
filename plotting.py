@@ -79,6 +79,7 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
 
 
 def plot_curves(accuracys, dbis, loss, title):
+    plt.rcParams["figure.figsize"] = (12, 8)
     plt.plot(accuracys[:, 0], accuracys[:, 1], label="Accuracy")
     plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
     plt.plot(loss[:, 0], loss[:, 1], label="Loss")
