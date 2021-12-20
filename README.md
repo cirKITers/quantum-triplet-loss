@@ -1,5 +1,15 @@
 # quantum-triplet-loss
 
+## Fixed Parameters
+
+- Circuit, measurement and embedding
+- 4 qubits for 2 outputs, 6 quibts for 3 outputs
+- LR 0.005, Alpha 1.0 - both constant
+- Number of training steps 7500
+- Triplet choice completely random
+
+## Tests
+
 ### Tests mit positivem Effekt
 - ZZ Measurement auf Qubits 0,1 und 2,3
 
