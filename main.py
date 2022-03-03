@@ -11,26 +11,23 @@ SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
 
-
 QUBITS = 4
 DATA_QUBITS = 4
-OUTPUT_QUBITS = QUBITS // 2
+OUTPUT_QUBITS = 2
 LAYERS = 5
 
 TRAIN_SIZE = 2000
 TEST_SIZE = 400
-CLASSES = (3, 4, 6)
+CLASSES = (3, 6)
 
-STEPS = 7501
+STEPS = 2501
 TEST_EVERY = 250
 
 START_STEPSIZE = 0.005
 UPDATE_SZ_EVERY = 35000
 SZ_FACTOR = 0.1
 
-START_ALPHA = 1.0
-UPDATE_ALPHA_EVERY = 100000
-ALPHA_FACTOR = 1
+ALPHA = 1.0
 
 SHOTS = None
 
@@ -48,8 +45,8 @@ def circuit(params, data):
             qml.CZ(wires=[wire, wire + 1])
         for wire in range(1, QUBITS - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    # return [qml.expval(qml.PauliZ(i)) for i in [0, 1]]
-    return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
+    return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
+    # return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -70,10 +67,9 @@ def train():
     optimizer = qml.AdamOptimizer(stepsize)
 
     def cost_fn(params):
-        return triplet_loss(params, qNode, anchor, positive, negative, alpha)
+        return triplet_loss(params, qNode, anchor, positive, negative, ALPHA)
 
     params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, QUBITS, 2))
-    alpha = START_ALPHA
 
     data = load_data("mnist", shuffle=SEED,
                      train_size=TRAIN_SIZE,
@@ -96,14 +92,9 @@ def train():
     dbis = []
     losses = []
     current_losses = []
+    gradients = []
 
     for step in range(STEPS):
-        # if step < 2000:
-        #     pos, neg = np.random.choice(range(len(CLASSES)),
-        #                                 size=2, replace=False,
-        #                                 p=[0.4, 0.4, 0.2],
-        #                                 )
-        # else:
         pos, neg = random.sample(range(len(CLASSES)), 2)
 
         anchor, positive = random.sample(images[int(pos)], 2)
@@ -118,6 +109,11 @@ def train():
             losses.append((step, np.average(current_losses)))
             current_losses = []
 
+        # if step % 100 == 0:
+        g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
+        gradients.append(np.var(g))
+            # print("Gradients", np.var(g))
+
         if step % TEST_EVERY == 0:
             accuracy, dbi = evaluate(data, qNode, params, step)
             accuracys.append((step, accuracy))
@@ -129,19 +125,17 @@ def train():
         #     optimizer.stepsize = stepsize
         #     print("Updated stepsize to", stepsize)
 
-        # if (step+1) % UPDATE_ALPHA_EVERY == 0:
-        #     alpha *= ALPHA_FACTOR
-        #     print("Updated alpha to", alpha)
-
     print("Accuracys:\n", accuracys)
     print("Maximum: ", max(accuracys))
 
     print("DBIs:\n", dbis)
     print("Minimum:", min(dbis))
 
-    plot_curves(np.array(accuracys), 
-                np.array(dbis), 
-                np.array(losses), 
+    print("Gradients Avg: ", np.average(gradients))
+
+    plot_curves(np.array(accuracys),
+                np.array(dbis),
+                np.array(losses),
                 f"Qubits: {QUBITS}, Layers: {LAYERS}, Classes: {CLASSES}, Output_dim: {OUTPUT_QUBITS}"
                 )
 

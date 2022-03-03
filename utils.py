@@ -27,3 +27,18 @@ def davies_bouldin_index(n, values, c_distances):
                               intra_cls_distances[j]) / d)
         dbis.append(max(fractions))
     return float(np.average(dbis))
+
+
+def cross_entropy_with_logits(predictions, targets, epsilon=1e-12):
+    """
+    Computes cross entropy between targets (encoded as one-hot vectors)
+    and predictions. 
+    Input: predictions (N, k) ndarray
+           targets (N, k) ndarray        
+    Returns: scalar
+    """
+    predictions = np.clip(predictions, epsilon, 1. - epsilon)
+    predictions = np.exp(predictions)/sum(np.exp(predictions))
+    N = predictions.shape[0]
+    ce = -np.sum(targets*np.log(predictions+1e-9))/N
+    return ce
