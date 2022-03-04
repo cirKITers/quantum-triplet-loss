@@ -1,11 +1,11 @@
 import random
 import pennylane as qml
 from pennylane import numpy as np
-from maskit.datasets import load_data
-from collections import Counter
 from sklearn.svm import SVC
 from utils import davies_bouldin_index, distances_between_centers
 from plotting import plot_2d, plot_3d, plot_curves
+from data import load_mnist, mnist_apn_generator
+
 
 SEED = 1337
 np.random.seed(SEED)
@@ -45,8 +45,8 @@ def circuit(params, data):
             qml.CZ(wires=[wire, wire + 1])
         for wire in range(1, QUBITS - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
-    # return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
+    # return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
+    return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -59,7 +59,8 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
                0.0)
 
 
-def train():
+def train(dataset: str):
+    assert(dataset in ["mnist", "bc"])
     dev = qml.device('default.qubit', wires=QUBITS, shots=SHOTS)
     qNode = qml.QNode(func=circuit, device=dev)
 
@@ -71,22 +72,17 @@ def train():
 
     params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, QUBITS, 2))
 
-    data = load_data("mnist", shuffle=SEED,
-                     train_size=TRAIN_SIZE,
-                     test_size=TEST_SIZE,
-                     classes=CLASSES,
-                     wires=DATA_QUBITS)
-    occurences_train = [np.argmax(x) for x in data.train_target]
-    occurences_test = [np.argmax(x) for x in data.test_target]
-    print("Train", Counter(occurences_train))
-    print("Test", Counter(occurences_test))
+    if dataset == "mnist":
+        train_x, train_y, test_x, test_y = load_mnist(seed=SEED,
+                                                      train_size=TRAIN_SIZE,
+                                                      test_size=TEST_SIZE,
+                                                      classes=CLASSES,
+                                                      wires=QUBITS,
+                                                      )
 
-    images = {}
-    for cls in range(len(CLASSES)):
-        images[cls] = []
-
-    for index, label in enumerate(data.train_target):
-        images[np.argmax(label)].append(data.train_data[index])
+        apn_generator = mnist_apn_generator(train_x,
+                                            train_y,
+                                            n_cls=len(CLASSES))
 
     accuracys = []
     dbis = []
@@ -95,10 +91,7 @@ def train():
     gradients = []
 
     for step in range(STEPS):
-        pos, neg = random.sample(range(len(CLASSES)), 2)
-
-        anchor, positive = random.sample(images[int(pos)], 2)
-        negative = random.choice(images[int(neg)])
+        anchor, positive, negative = next(apn_generator)
 
         params, c = optimizer.step_and_cost(cost_fn, params)
 
@@ -115,7 +108,8 @@ def train():
             # print("Gradients", np.var(g))
 
         if step % TEST_EVERY == 0:
-            accuracy, dbi = evaluate(data, qNode, params, step)
+            accuracy, dbi = evaluate(train_x, train_y, test_x, test_y, 
+                                     qNode, params, step)
             accuracys.append((step, accuracy))
             dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
@@ -140,24 +134,25 @@ def train():
                 )
 
 
-def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
+def evaluate(train_x, train_y, test_x, test_y, 
+             qNode, params, step, show=False, save=True, cont=True):
 
     svm = SVC(kernel="linear")
-    clf = svm.fit([qNode(params, x) for x in data.train_data],
-                  [np.argmax(x) for x in data.train_target]
+    clf = svm.fit([qNode(params, x) for x in train_x],
+                  [np.argmax(y) for y in train_y]
                   )
-    test_data = [qNode(params, x) for x in data.test_data]
-    test_target = [np.argmax(x) for x in data.test_target]
+    test_data = [qNode(params, x) for x in test_x]
+    test_target = [np.argmax(y) for y in test_y]
     accuracy = clf.score(test_data, test_target)
 
     print("Accuracy", accuracy)
 
     # this will store:
     # label (0 - len(CLASSES)), x_output, y_output, distance_to_center
-    values = np.zeros((len(data.test_target), OUTPUT_QUBITS+2))
+    values = np.zeros((len(test_y), OUTPUT_QUBITS+2))
 
     # store label and output
-    for index, (label, datum) in enumerate(zip(data.test_target, data.test_data)):
+    for index, (label, datum) in enumerate(zip(test_y, test_x)):
         output = qNode(params, datum)
         values[index, 0] = np.argmax(label)
         for i in range(len(output)):
@@ -171,7 +166,7 @@ def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
         centers[cls] = center
 
     # calculate distance to center
-    for i in range(len(data.test_target)):
+    for i in range(len(test_y)):
         values[i, -1] = np.linalg.norm(values[i, 1:(1+OUTPUT_QUBITS)]
                                        - centers[int(values[i, 0])])
 
@@ -190,4 +185,4 @@ def evaluate(data, qNode, params, step, show=False, save=True, cont=True):
 
 
 if __name__ == "__main__":
-    train()
+    train("mnist")
