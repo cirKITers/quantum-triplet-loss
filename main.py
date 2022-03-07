@@ -1,10 +1,10 @@
 import random
 import pennylane as qml
 from pennylane import numpy as np
-from sklearn.svm import SVC
-from utils import davies_bouldin_index, distances_between_centers
-from plotting import plot_2d, plot_3d, plot_curves
+from plotting import plot_curves
 from data import load_mnist, mnist_apn_generator
+from data import load_breast_cancer_lju, bc_apn_generator
+from evaluation import evaluate_mnist, evaluate_bc
 
 
 SEED = 1337
@@ -82,7 +82,16 @@ def train(dataset: str):
 
         apn_generator = mnist_apn_generator(train_x,
                                             train_y,
-                                            n_cls=len(CLASSES))
+                                            n_cls=len(CLASSES)
+                                            )
+    if dataset == "bc":
+        train_x, train_y, test_x, test_y = load_breast_cancer_lju(TRAIN_SIZE,
+                                                                  TEST_SIZE
+                                                                  )
+
+        apn_generator = bc_apn_generator(train_x,
+                                         train_y
+                                        )
 
     accuracys = []
     dbis = []
@@ -102,16 +111,25 @@ def train(dataset: str):
             losses.append((step, np.average(current_losses)))
             current_losses = []
 
-        # if step % 100 == 0:
-        g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
-        gradients.append(np.var(g))
-            # print("Gradients", np.var(g))
+        if step % 100 == 0:
+            g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
+            gradients.append(np.var(g))
+            print("Gradients", np.var(g))
 
         if step % TEST_EVERY == 0:
-            accuracy, dbi = evaluate(train_x, train_y, test_x, test_y, 
-                                     qNode, params, step)
+            if dataset == "mnist":
+                accuracy, dbi = evaluate_mnist(train_x, train_y, test_x, test_y,
+                                               qNode, params, step, 
+                                               CLASSES, OUTPUT_QUBITS
+                                               )
+                dbis.append((step, dbi))
+                
+            elif dataset == "bc":
+                accuracy = evaluate_bc(train_x, train_y, test_x, test_y,
+                                       qNode, params
+                                       )
+            
             accuracys.append((step, accuracy))
-            dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
 
         # if (step+1) % UPDATE_SZ_EVERY == 0:
@@ -119,69 +137,25 @@ def train(dataset: str):
         #     optimizer.stepsize = stepsize
         #     print("Updated stepsize to", stepsize)
 
-    print("Accuracys:\n", accuracys)
-    print("Maximum: ", max(accuracys))
+    if accuracys:
+        print("Accuracys:\n", accuracys)
+        print("Maximum: ", max(accuracys))
 
-    print("DBIs:\n", dbis)
-    print("Minimum:", min(dbis))
+    if dbis:
+        print("DBIs:\n", dbis)
+        print("Minimum:", min(dbis))
 
-    print("Gradients Avg: ", np.average(gradients))
+    if gradients:
+        print("Gradients Avg: ", np.average(gradients))
 
-    plot_curves(np.array(accuracys),
-                np.array(dbis),
-                np.array(losses),
-                f"Qubits: {QUBITS}, Layers: {LAYERS}, Classes: {CLASSES}, Output_dim: {OUTPUT_QUBITS}"
-                )
-
-
-def evaluate(train_x, train_y, test_x, test_y, 
-             qNode, params, step, show=False, save=True, cont=True):
-
-    svm = SVC(kernel="linear")
-    clf = svm.fit([qNode(params, x) for x in train_x],
-                  [np.argmax(y) for y in train_y]
-                  )
-    test_data = [qNode(params, x) for x in test_x]
-    test_target = [np.argmax(y) for y in test_y]
-    accuracy = clf.score(test_data, test_target)
-
-    print("Accuracy", accuracy)
-
-    # this will store:
-    # label (0 - len(CLASSES)), x_output, y_output, distance_to_center
-    values = np.zeros((len(test_y), OUTPUT_QUBITS+2))
-
-    # store label and output
-    for index, (label, datum) in enumerate(zip(test_y, test_x)):
-        output = qNode(params, datum)
-        values[index, 0] = np.argmax(label)
-        for i in range(len(output)):
-            values[index, 1+i] = output[i]
-
-    # calculate centers, key is label
-    centers = {}
-    for cls in range(len(CLASSES)):
-        rows = np.where(values[:, 0] == cls)
-        center = np.average(values[rows][:, 1:(1+OUTPUT_QUBITS)], axis=0)
-        centers[cls] = center
-
-    # calculate distance to center
-    for i in range(len(test_y)):
-        values[i, -1] = np.linalg.norm(values[i, 1:(1+OUTPUT_QUBITS)]
-                                       - centers[int(values[i, 0])])
-
-    c_distances = distances_between_centers(centers)
-    print("Distances between centers\n", c_distances)
-
-    dbi = davies_bouldin_index(len(CLASSES), values, c_distances)
-    print("Davies Bouldin Index:", dbi)
-
-    if OUTPUT_QUBITS == 2:
-        plot_2d(CLASSES, values, centers, step, clf, accuracy, dbi, show, save, cont)
-    elif OUTPUT_QUBITS == 3:
-        plot_3d(CLASSES, values, centers, step, accuracy, dbi, show, save)
-
-    return accuracy, dbi
+    # plot_curves(np.array(accuracys),
+    #             np.array(dbis),
+    #             np.array(losses),
+    #             f"Qubits: {QUBITS}, " +
+    #             f"Layers: {LAYERS}, " +
+    #             f"Classes: {CLASSES}, " +
+    #             f"Output_dim: {OUTPUT_QUBITS}"
+    #             )
 
 
 if __name__ == "__main__":

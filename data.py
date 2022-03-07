@@ -87,8 +87,25 @@ def mnist_apn_generator(train_x, train_y, n_cls):
         yield anchor, positive, negative
 
 
-def bc_apn_generator():
-    pass
+def bc_apn_generator(train_x, train_y):
+    train_y = np.expand_dims(train_y, axis=1)
+    data = np.concatenate((train_y, train_x), axis=1)
+    mask_0 = (data[:, 0] == 0)
+    mask_1 = (data[:, 0] == 1)
+    data_0 = data[mask_0, :]
+    data_1 = data[mask_1, :]
+
+    while True:
+        anchor_cls = data[np.random.randint(0, data.shape[0], 1)][0][0]
+        
+        if anchor_cls == 0:
+            anchor, positive = data_0[np.random.randint(0, data_0.shape[0], 2)]
+            negative = data_1[np.random.randint(0, data_1.shape[0], 1)][0]
+        elif anchor_cls == 1:
+            anchor, positive = data_1[np.random.randint(0, data_1.shape[0], 2)]
+            negative = data_0[np.random.randint(0, data_0.shape[0], 1)][0]
+    
+        yield anchor[1:], positive[1:], negative[1:]
 
 
 if __name__ == "__main__":
