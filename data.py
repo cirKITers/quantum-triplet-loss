@@ -39,7 +39,7 @@ def load_breast_cancer_skl(train_size=300, test_size=100):
     for i in range(x.shape[1]):
         x[:, i] = np.interp(x[:, i],
                             (x[:, i].min(), x[:, i].max()),
-                            (0, np.pi)
+                            (0 + 1e-10, np.pi - 1e-10)
                             )
 
     pmt = np.random.permutation(len(x))
@@ -88,8 +88,14 @@ def mnist_apn_generator(train_x, train_y, n_cls):
 
 
 def bc_apn_generator(train_x, train_y):
+    _, unique_elements = np.unique(train_x, return_index=True, axis=0)
+
+    train_x = train_x[unique_elements, :]
+    train_y = train_y[unique_elements]
+
     train_y = np.expand_dims(train_y, axis=1)
     data = np.concatenate((train_y, train_x), axis=1)
+
     mask_0 = (data[:, 0] == 0)
     mask_1 = (data[:, 0] == 1)
     data_0 = data[mask_0, :]
@@ -99,10 +105,12 @@ def bc_apn_generator(train_x, train_y):
         anchor_cls = data[np.random.randint(0, data.shape[0], 1)][0][0]
         
         if anchor_cls == 0:
-            anchor, positive = data_0[np.random.randint(0, data_0.shape[0], 2)]
+            anc, pos = random.sample(range(data_0.shape[0]), 2)
+            anchor, positive = data_0[anc], data_0[pos]
             negative = data_1[np.random.randint(0, data_1.shape[0], 1)][0]
         elif anchor_cls == 1:
-            anchor, positive = data_1[np.random.randint(0, data_1.shape[0], 2)]
+            anc, pos = random.sample(range(data_1.shape[0]), 2)
+            anchor, positive = data_1[anc], data_1[pos]
             negative = data_0[np.random.randint(0, data_0.shape[0], 1)][0]
     
         yield anchor[1:], positive[1:], negative[1:]

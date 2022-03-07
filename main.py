@@ -11,13 +11,13 @@ SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
 
-QUBITS = 4
-DATA_QUBITS = 4
+QUBITS = 9
+DATA_QUBITS = 9
 OUTPUT_QUBITS = 2
 LAYERS = 5
 
-TRAIN_SIZE = 2000
-TEST_SIZE = 400
+TRAIN_SIZE = 150
+TEST_SIZE = 100
 CLASSES = (3, 6)
 
 STEPS = 2501
@@ -54,9 +54,13 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     p_value = qNode(params, positive)
     n_value = qNode(params, negative)
 
-    return max((np.linalg.norm(a_value-p_value)**2 -
-               np.linalg.norm(a_value - n_value)**2 + alpha),
-               0.0)
+    dist_a_p = np.linalg.norm(a_value - p_value)**2 
+    dist_a_n = np.linalg.norm(a_value - n_value)**2
+
+    if dist_a_p == 0:
+        print(anchor, positive)
+    
+    return max(dist_a_p - dist_a_n + alpha, 0.0)
 
 
 def train(dataset: str):
@@ -77,7 +81,7 @@ def train(dataset: str):
                                                       train_size=TRAIN_SIZE,
                                                       test_size=TEST_SIZE,
                                                       classes=CLASSES,
-                                                      wires=QUBITS,
+                                                      wires=QUBITS
                                                       )
 
         apn_generator = mnist_apn_generator(train_x,
@@ -159,4 +163,4 @@ def train(dataset: str):
 
 
 if __name__ == "__main__":
-    train("mnist")
+    train("bc")
