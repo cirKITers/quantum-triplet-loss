@@ -5,7 +5,7 @@ from pennylane import numpy as np
 GG = 100
 
 
-def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save=True, cont=True):
+def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True, cont=True, dbi=None):
     colors = [("tomato",  "red"),
               ("deepskyblue", "blue"),
               ("chartreuse", "green"),
@@ -33,7 +33,10 @@ def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save
         ax = plt.gca()
         ax.contour(xx, yy, zz, len(classes)-2, colors='black')
 
-    plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
+    if dbi == None:
+        plt.title(f"Step: {step} | Acc: {accuracy:.3f}")
+    else:
+        plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
     plt.ylim(-1, 1)
     plt.xlim(-1, 1)
     plt.legend()
@@ -45,7 +48,7 @@ def plot_2d(classes, values, centers, step, clf, accuracy, dbi, show=False, save
     plt.close()
 
 
-def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True):
+def plot_3d(classes, values, centers, step, accuracy, show=False, save=True, dbi=None):
     colors = [("tomato",  "red"),
               ("deepskyblue", "blue"),
               ("chartreuse", "green"),
@@ -66,7 +69,10 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
         ax.plot(center[0], center[1], center[2], color=center_color,
                 alpha=0.9, ms=13, marker="*", markeredgecolor="black")
 
-    plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
+    if dbi == None:
+        plt.title(f"Step: {step} | Acc: {accuracy:.3f}")
+    else:
+        plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
     ax.set_xlim([-1, 1])
     ax.set_ylim([-1, 1])
     ax.set_zlim([-1, 1])
@@ -81,7 +87,8 @@ def plot_3d(classes, values, centers, step, accuracy, dbi, show=False, save=True
 def plot_curves(accuracys, dbis, loss, title):
     plt.figure(figsize=(12,8))
     plt.plot(accuracys[:, 0], accuracys[:, 1], label="Accuracy")
-    plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
+    if dbis:
+        plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
     plt.plot(loss[:, 0], loss[:, 1], label="Loss")
     plt.title(title)
     plt.ylim(ymax = 3)

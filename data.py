@@ -25,6 +25,7 @@ def load_breast_cancer_lju(train_size=150, test_size=100):
     np.random.shuffle(data)
     x = data[:, 1:]
     y = data[:, 0]
+
     return x[:train_size], \
         y[:train_size], \
         x[train_size:train_size+test_size], \
@@ -102,8 +103,12 @@ def bc_apn_generator(train_x, train_y):
     data_1 = data[mask_1, :]
 
     while True:
-        anchor_cls = data[np.random.randint(0, data.shape[0], 1)][0][0]
-        
+        # same distribution as dataset
+        # anchor_cls = data[np.random.randint(0, data.shape[0], 1)][0][0]
+
+        # 50:50 distribution
+        anchor_cls = random.choice([0, 1])
+
         if anchor_cls == 0:
             anc, pos = random.sample(range(data_0.shape[0]), 2)
             anchor, positive = data_0[anc], data_0[pos]

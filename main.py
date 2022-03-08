@@ -18,12 +18,12 @@ LAYERS = 5
 
 TRAIN_SIZE = 150
 TEST_SIZE = 100
-CLASSES = (3, 6)
+CLASSES = ("no-recurrence", "recurrence")
 
-STEPS = 2501
+STEPS = 1001
 TEST_EVERY = 250
 
-START_STEPSIZE = 0.005
+START_STEPSIZE = 0.1
 UPDATE_SZ_EVERY = 35000
 SZ_FACTOR = 0.1
 
@@ -57,9 +57,6 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     dist_a_p = np.linalg.norm(a_value - p_value)**2 
     dist_a_n = np.linalg.norm(a_value - n_value)**2
 
-    if dist_a_p == 0:
-        print(anchor, positive)
-    
     return max(dist_a_p - dist_a_n + alpha, 0.0)
 
 
@@ -130,7 +127,7 @@ def train(dataset: str):
                 
             elif dataset == "bc":
                 accuracy = evaluate_bc(train_x, train_y, test_x, test_y,
-                                       qNode, params
+                                       qNode, params, step, CLASSES, OUTPUT_QUBITS
                                        )
             
             accuracys.append((step, accuracy))
@@ -152,14 +149,14 @@ def train(dataset: str):
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
 
-    # plot_curves(np.array(accuracys),
-    #             np.array(dbis),
-    #             np.array(losses),
-    #             f"Qubits: {QUBITS}, " +
-    #             f"Layers: {LAYERS}, " +
-    #             f"Classes: {CLASSES}, " +
-    #             f"Output_dim: {OUTPUT_QUBITS}"
-    #             )
+    plot_curves(np.array(accuracys),
+                np.array(dbis),
+                np.array(losses),
+                f"Qubits: {QUBITS}, " +
+                f"Layers: {LAYERS}, " +
+                f"Classes: {CLASSES}, " +
+                f"Output_dim: {OUTPUT_QUBITS}"
+                )
 
 
 if __name__ == "__main__":
