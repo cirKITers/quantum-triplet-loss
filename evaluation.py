@@ -95,7 +95,6 @@ def evaluate_bc(train_x, train_y, test_x, test_y,
     c_distances = distances_between_centers(centers)
     print("Distances between centers\n", c_distances)
 
-
     if output_qubits == 2:
         plot_2d(classes, values, centers, step, clf,
                 accuracy, show, save, cont)

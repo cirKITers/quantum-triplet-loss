@@ -46,7 +46,8 @@ def circuit(params, data):
         for wire in range(1, QUBITS - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
     # return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
-    return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1)) for x in range(OUTPUT_QUBITS)]
+    return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1))
+            for x in range(OUTPUT_QUBITS)]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -54,7 +55,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     p_value = qNode(params, positive)
     n_value = qNode(params, negative)
 
-    dist_a_p = np.linalg.norm(a_value - p_value)**2 
+    dist_a_p = np.linalg.norm(a_value - p_value)**2
     dist_a_n = np.linalg.norm(a_value - n_value)**2
 
     return max(dist_a_p - dist_a_n + alpha, 0.0)
@@ -71,7 +72,9 @@ def train(dataset: str):
     def cost_fn(params):
         return triplet_loss(params, qNode, anchor, positive, negative, ALPHA)
 
-    params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, QUBITS, 2))
+    params = np.random.uniform(low=-np.pi, high=np.pi,
+                               size=(LAYERS, QUBITS, 2)
+                               )
 
     if dataset == "mnist":
         train_x, train_y, test_x, test_y = load_mnist(seed=SEED,
@@ -92,7 +95,7 @@ def train(dataset: str):
 
         apn_generator = bc_apn_generator(train_x,
                                          train_y
-                                        )
+                                         )
 
     accuracys = []
     dbis = []
@@ -119,17 +122,20 @@ def train(dataset: str):
 
         if step % TEST_EVERY == 0:
             if dataset == "mnist":
-                accuracy, dbi = evaluate_mnist(train_x, train_y, test_x, test_y,
-                                               qNode, params, step, 
+                accuracy, dbi = evaluate_mnist(train_x, train_y,
+                                               test_x, test_y,
+                                               qNode, params, step,
                                                CLASSES, OUTPUT_QUBITS
                                                )
                 dbis.append((step, dbi))
-                
+
             elif dataset == "bc":
-                accuracy = evaluate_bc(train_x, train_y, test_x, test_y,
-                                       qNode, params, step, CLASSES, OUTPUT_QUBITS
+                accuracy = evaluate_bc(train_x, train_y,
+                                       test_x, test_y,
+                                       qNode, params, step,
+                                       CLASSES, OUTPUT_QUBITS
                                        )
-            
+
             accuracys.append((step, accuracy))
             print("Accuracys:\n", accuracys)
 
