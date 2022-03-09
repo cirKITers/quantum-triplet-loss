@@ -21,7 +21,7 @@ TRAIN_SIZE = 150
 TEST_SIZE = 100
 CLASSES = ("one moon", "the other moon")
 
-STEPS = 2501
+STEPS = 501
 TEST_EVERY = 250
 
 START_STEPSIZE = 0.005
@@ -154,11 +154,11 @@ def train(dataset: str):
 
     if accuracys:
         print("Accuracys:\n", accuracys)
-        print("Maximum: ", max(accuracys))
+        print("Maximum: ", max(np.array(accuracys)[:, 1]))
 
     if dbis:
         print("DBIs:\n", dbis)
-        print("Minimum:", min(dbis))
+        print("Minimum:", min(np.array(dbis)[:, 1]))
 
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
@@ -174,4 +174,4 @@ def train(dataset: str):
 
 
 if __name__ == "__main__":
-    train("moons")
+    train("bc")

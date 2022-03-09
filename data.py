@@ -26,7 +26,7 @@ def load_breast_cancer_lju(train_size=150, test_size=100, shuffle=True):
         np.random.shuffle(data)
     x = data[:, 1:]
     y = data[:, 0]
-
+    y = y.astype(int)
     return x[:train_size], \
         y[:train_size], \
         x[train_size:train_size+test_size], \
@@ -158,30 +158,30 @@ def moons_apn_generator(train_x, train_y):
 
 
 if __name__ == "__main__":
-    # dataset = load_breast_cancer_skl()
+    # dataset = load_mnist(1337, 100, 50, [3, 6], 4)
     # for d in dataset:
     #     print(d.shape)
     # train_x, train_y, test_x, test_y = dataset
-    # print(train_x[0])
+    # print(train_y[0])
 
-    # dataset = load_breast_cancer_lju(shuffle=False)
-    # for d in dataset:
-    #     print(d.shape)
-    # train_x, train_y, test_x, test_y = dataset
-    # for label, features in zip(train_y, train_x):
-    #     print(label, features)
-
-    dataset = load_moons_dataset()
+    dataset = load_breast_cancer_lju(shuffle=False)
     for d in dataset:
         print(d.shape)
     train_x, train_y, test_x, test_y = dataset
+    for label, features in zip(train_y, train_x):
+        print(label, features)
 
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(6, 6))
-    for x, y in zip(train_x, train_y):
-        if y == 0:
-            plt.scatter(*x, color="red")
-        else:
-            plt.scatter(*x, color="blue")
+    # dataset = load_moons_dataset()
+    # for d in dataset:
+    #     print(d.shape)
+    # train_x, train_y, test_x, test_y = dataset
 
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.figure(figsize=(6, 6))
+    # for x, y in zip(train_x, train_y):
+    #     if y == 0:
+    #         plt.scatter(*x, color="red")
+    #     else:
+    #         plt.scatter(*x, color="blue")
+
+    # plt.show()

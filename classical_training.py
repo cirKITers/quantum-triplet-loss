@@ -1,23 +1,24 @@
 import random
 import pennylane as qml
 from pennylane import numpy as np
-from maskit.datasets import load_data
-from collections import Counter
 from utils import cross_entropy_with_logits
+from data import load_mnist
+from data import load_breast_cancer_lju
+from data import load_moons_dataset
 
 
 SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
 
-QUBITS = 4
-DATA_QUBITS = 4
+QUBITS = 9
+DATA_QUBITS = 9
 CLASSES = (3, 6)
 OUTPUT_QUBITS = len(CLASSES)
-LAYERS = 20
+LAYERS = 5
 
-TRAIN_SIZE = 2000
-TEST_SIZE = 400
+TRAIN_SIZE = 150
+TEST_SIZE = 100
 
 STEPS = 1001
 TEST_EVERY = 250
@@ -52,7 +53,7 @@ def loss(params, qNode, x, y):
     return ce_loss
 
 
-def train():
+def train(dataset="minst"):
     dev = qml.device('default.qubit', wires=QUBITS, shots=SHOTS)
     qNode = qml.QNode(func=circuit, device=dev)
 
@@ -62,18 +63,39 @@ def train():
     def cost_fn(params):
         return loss(params, qNode, x, y)
 
-    params = np.random.uniform(low=-np.pi, high=np.pi, size=(LAYERS, QUBITS, 2))
+    params = np.random.uniform(low=-np.pi, high=np.pi,
+                               size=(LAYERS, QUBITS, 2)
+                               )
 
-    data = load_data("mnist", shuffle=SEED,
-                     train_size=TRAIN_SIZE,
-                     test_size=TEST_SIZE,
-                     classes=CLASSES,
-                     wires=DATA_QUBITS)
-    occurences_train = [np.argmax(x) for x in data.train_target]
-    occurences_test = [np.argmax(x) for x in data.test_target]
-    print("Train", Counter(occurences_train))
-    print("Test", Counter(occurences_test))
-
+    if dataset == "mnist":
+        train_x, train_y, test_x, test_y = load_mnist(seed=SEED,
+                                                      train_size=TRAIN_SIZE,
+                                                      test_size=TEST_SIZE,
+                                                      classes=CLASSES,
+                                                      wires=QUBITS
+                                                      )
+        train_y = train_y[:, :len(CLASSES)]
+        test_y = test_y[:, :len(CLASSES)]
+    elif dataset == "bc":
+        train_x, train_y, test_x, test_y = load_breast_cancer_lju(TRAIN_SIZE,
+                                                                  TEST_SIZE
+                                                                  )
+        dummy = np.zeros((train_y.size, train_y.max()+1))
+        dummy[np.arange(train_y.size), train_y] = 1
+        train_y = dummy
+        dummy = np.zeros((test_y.size, test_y.max()+1))
+        dummy[np.arange(test_y.size), test_y] = 1
+        test_y = dummy
+    elif dataset == "moons":
+        train_x, train_y, test_x, test_y = load_moons_dataset(TRAIN_SIZE,
+                                                              TEST_SIZE
+                                                              )
+        dummy = np.zeros((train_y.size, train_y.max()+1))
+        dummy[np.arange(train_y.size), train_y] = 1
+        train_y = dummy
+        dummy = np.zeros((test_y.size, test_y.max()+1))
+        dummy[np.arange(test_y.size), test_y] = 1
+        test_y = dummy
     accuracys = []
     losses = []
     current_losses = []
@@ -81,7 +103,7 @@ def train():
 
     step = 0
     while step < STEPS:
-        for x, y in zip(data.train_data, data.train_target[:, :len(CLASSES)]):
+        for x, y in zip(train_x, train_y):
             params, c = optimizer.step_and_cost(cost_fn, params)
             print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
 
@@ -90,13 +112,13 @@ def train():
                 losses.append((step, np.average(current_losses)))
                 current_losses = []
 
-            # if step % 100 == 0:
-            g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
-            gradients.append(np.var(g))
-            print("Gradients", np.var(g))
+            if step % 100 == 0:
+                g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
+                gradients.append(np.var(g))
+                print("Gradients", np.var(g))
 
             if step % TEST_EVERY == 0:
-                accuracy = evaluate(data, qNode, params, step)
+                accuracy = evaluate(test_x, test_y, qNode, params)
                 accuracys.append((step, accuracy))
                 print(f"Accuracy in step {step}: {accuracy}")
                 print("Accuracys:\n", accuracys)
@@ -111,19 +133,19 @@ def train():
                 break
 
     print("Accuracys:\n", accuracys)
-    print("Maximum: ", max(accuracys))
+    print("Maximum: ", max(np.array(accuracys)[:, 1]))
 
     print("Gradients Avg: ", np.average(gradients))
 
 
-def evaluate(data, qNode, params):
+def evaluate(test_x, test_y, qNode, params):
     correct = 0
-    for x, y in zip(data.test_data, data.test_target):
+    for x, y in zip(test_x, test_y):
         prediction = qNode(params, x)
         if np.argmax(prediction[:, 1]) == np.argmax(y):
             correct += 1
-    return correct/len(data.test_data)
+    return correct/len(test_y)
 
 
 if __name__ == "__main__":
-    train()
+    train("bc")
