@@ -42,3 +42,9 @@ def cross_entropy_with_logits(predictions, targets, epsilon=1e-12):
     N = predictions.shape[0]
     ce = -np.sum(targets*np.log(predictions+1e-9))/N
     return ce
+
+
+def labels_to_one_hot(label: np.array):
+    dummy = np.zeros((label.size, label.max()+1))
+    dummy[np.arange(label.size), label] = 1
+    return dummy

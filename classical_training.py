@@ -1,7 +1,7 @@
 import random
 import pennylane as qml
 from pennylane import numpy as np
-from utils import cross_entropy_with_logits
+from utils import cross_entropy_with_logits, labels_to_one_hot
 from data import load_mnist
 from data import load_breast_cancer_lju
 from data import load_moons_dataset
@@ -80,22 +80,15 @@ def train(dataset="minst"):
         train_x, train_y, test_x, test_y = load_breast_cancer_lju(TRAIN_SIZE,
                                                                   TEST_SIZE
                                                                   )
-        dummy = np.zeros((train_y.size, train_y.max()+1))
-        dummy[np.arange(train_y.size), train_y] = 1
-        train_y = dummy
-        dummy = np.zeros((test_y.size, test_y.max()+1))
-        dummy[np.arange(test_y.size), test_y] = 1
-        test_y = dummy
+        train_y = labels_to_one_hot(train_y)
+        test_y = labels_to_one_hot(test_y)
     elif dataset == "moons":
         train_x, train_y, test_x, test_y = load_moons_dataset(TRAIN_SIZE,
                                                               TEST_SIZE
                                                               )
-        dummy = np.zeros((train_y.size, train_y.max()+1))
-        dummy[np.arange(train_y.size), train_y] = 1
-        train_y = dummy
-        dummy = np.zeros((test_y.size, test_y.max()+1))
-        dummy[np.arange(test_y.size), test_y] = 1
-        test_y = dummy
+        train_y = labels_to_one_hot(train_y)
+        test_y = labels_to_one_hot(test_y)
+
     accuracys = []
     losses = []
     current_losses = []
