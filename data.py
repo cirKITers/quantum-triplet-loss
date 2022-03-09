@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from collections import Counter
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_breast_cancer, make_moons
 from datasets.breast_cancer.bc_features import *
 from maskit.datasets import load_data
 
@@ -123,6 +123,38 @@ def bc_apn_generator(train_x, train_y):
         yield anchor[1:], positive[1:], negative[1:]
 
 
+def load_moons_dataset(train_size=300, test_size=100):
+    X, Y = make_moons(n_samples=train_size+test_size, shuffle=True, noise=0.15, random_state=1337)
+    X = (X - np.min(X))/np.ptp(X)*np.pi
+
+    return X[:train_size], Y[:train_size], X[train_size:], Y[train_size:]
+
+
+def moons_apn_generator(train_x, train_y):
+    train_y = np.expand_dims(train_y, axis=1)
+    data = np.concatenate((train_y, train_x), axis=1)
+
+    mask_0 = (data[:, 0] == 0)
+    mask_1 = (data[:, 0] == 1)
+    data_0 = data[mask_0, :]
+    data_1 = data[mask_1, :]
+
+    while True:
+        # 50:50 distribution
+        anchor_cls = random.choice([0, 1])
+
+        if anchor_cls == 0:
+            anc, pos = random.sample(range(data_0.shape[0]), 2)
+            anchor, positive = data_0[anc], data_0[pos]
+            negative = data_1[np.random.randint(0, data_1.shape[0], 1)][0]
+        elif anchor_cls == 1:
+            anc, pos = random.sample(range(data_1.shape[0]), 2)
+            anchor, positive = data_1[anc], data_1[pos]
+            negative = data_0[np.random.randint(0, data_0.shape[0], 1)][0]
+
+        yield anchor[1:], positive[1:], negative[1:]
+
+
 if __name__ == "__main__":
     # dataset = load_breast_cancer_skl()
     # for d in dataset:
@@ -130,9 +162,23 @@ if __name__ == "__main__":
     # train_x, train_y, test_x, test_y = dataset
     # print(train_x[0])
 
-    dataset = load_breast_cancer_lju(shuffle=False)
+    # dataset = load_breast_cancer_lju(shuffle=False)
+    # for d in dataset:
+    #     print(d.shape)
+    # train_x, train_y, test_x, test_y = dataset
+    # for label, features in zip(train_y, train_x):
+    #     print(label, features)
+
+    dataset = load_moons_dataset()
     for d in dataset:
         print(d.shape)
     train_x, train_y, test_x, test_y = dataset
-    for label, features in zip(train_y, train_x):
-        print(label, features)
+
+    import matplotlib.pyplot as plt
+    for x, y in zip(train_x, train_y):
+        if y == 0:
+            plt.scatter(*x, color="red")
+        else:
+            plt.scatter(*x, color="blue")
+
+    plt.show()
