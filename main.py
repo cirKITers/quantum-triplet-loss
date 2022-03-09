@@ -4,6 +4,7 @@ from pennylane import numpy as np
 from plotting import plot_curves
 from data import load_mnist, mnist_apn_generator
 from data import load_breast_cancer_lju, bc_apn_generator
+from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate_mnist, evaluate_bc
 
 
@@ -18,12 +19,12 @@ LAYERS = 5
 
 TRAIN_SIZE = 150
 TEST_SIZE = 100
-CLASSES = ("no-recurrence", "recurrence")
+CLASSES = ("one moon", "the other moon")
 
-STEPS = 1001
+STEPS = 2501
 TEST_EVERY = 250
 
-START_STEPSIZE = 0.1
+START_STEPSIZE = 0.005
 UPDATE_SZ_EVERY = 35000
 SZ_FACTOR = 0.1
 
@@ -62,7 +63,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
 
 
 def train(dataset: str):
-    assert(dataset in ["mnist", "bc"])
+    assert(dataset in ["mnist", "bc", "moons"])
     dev = qml.device('default.qubit', wires=QUBITS, shots=SHOTS)
     qNode = qml.QNode(func=circuit, device=dev)
 
@@ -88,7 +89,7 @@ def train(dataset: str):
                                             train_y,
                                             n_cls=len(CLASSES)
                                             )
-    if dataset == "bc":
+    elif dataset == "bc":
         train_x, train_y, test_x, test_y = load_breast_cancer_lju(TRAIN_SIZE,
                                                                   TEST_SIZE
                                                                   )
@@ -96,6 +97,13 @@ def train(dataset: str):
         apn_generator = bc_apn_generator(train_x,
                                          train_y
                                          )
+    elif dataset == "moons":
+        train_x, train_y, test_x, test_y = load_moons_dataset(TRAIN_SIZE,
+                                                              TEST_SIZE
+                                                              )
+        apn_generator = moons_apn_generator(train_x,
+                                            train_y
+                                            )
 
     accuracys = []
     dbis = []
@@ -129,7 +137,7 @@ def train(dataset: str):
                                                )
                 dbis.append((step, dbi))
 
-            elif dataset == "bc":
+            elif dataset == "bc" or dataset == "moons":
                 accuracy = evaluate_bc(train_x, train_y,
                                        test_x, test_y,
                                        qNode, params, step,
@@ -166,4 +174,4 @@ def train(dataset: str):
 
 
 if __name__ == "__main__":
-    train("bc")
+    train("moons")

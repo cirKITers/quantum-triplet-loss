@@ -61,7 +61,7 @@ def load_mnist(seed, train_size, test_size, classes, wires):
                      )
     occurences_train = [np.argmax(x) for x in data.train_target]
     occurences_test = [np.argmax(x) for x in data.test_target]
- 
+
     print("Train", Counter(occurences_train))
     print("Test", Counter(occurences_test))
 
@@ -124,7 +124,9 @@ def bc_apn_generator(train_x, train_y):
 
 
 def load_moons_dataset(train_size=300, test_size=100):
-    X, Y = make_moons(n_samples=train_size+test_size, shuffle=True, noise=0.15, random_state=1337)
+    X, Y = make_moons(n_samples=train_size+test_size, shuffle=True,
+                      noise=0.15, random_state=1337
+                      )
     X = (X - np.min(X))/np.ptp(X)*np.pi
 
     return X[:train_size], Y[:train_size], X[train_size:], Y[train_size:]
@@ -175,6 +177,7 @@ if __name__ == "__main__":
     train_x, train_y, test_x, test_y = dataset
 
     import matplotlib.pyplot as plt
+    plt.figure(figsize=(6, 6))
     for x, y in zip(train_x, train_y):
         if y == 0:
             plt.scatter(*x, color="red")
