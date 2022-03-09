@@ -5,6 +5,7 @@ from utils import cross_entropy_with_logits, labels_to_one_hot
 from data import load_mnist
 from data import load_breast_cancer_lju
 from data import load_moons_dataset
+from evaluation import evaluate_classical
 
 
 SEED = 1337
@@ -111,15 +112,10 @@ def train(dataset="minst"):
                 print("Gradients", np.var(g))
 
             if step % TEST_EVERY == 0:
-                accuracy = evaluate(test_x, test_y, qNode, params)
+                accuracy = evaluate_classical(test_x, test_y, qNode, params)
                 accuracys.append((step, accuracy))
                 print(f"Accuracy in step {step}: {accuracy}")
                 print("Accuracys:\n", accuracys)
-
-            # if (step+1) % UPDATE_SZ_EVERY == 0:
-            #     stepsize *= SZ_FACTOR
-            #     optimizer.stepsize = stepsize
-            #     print("Updated stepsize to", stepsize)
 
             step += 1
             if step >= STEPS:
@@ -129,15 +125,6 @@ def train(dataset="minst"):
     print("Maximum: ", max(np.array(accuracys)[:, 1]))
 
     print("Gradients Avg: ", np.average(gradients))
-
-
-def evaluate(test_x, test_y, qNode, params):
-    correct = 0
-    for x, y in zip(test_x, test_y):
-        prediction = qNode(params, x)
-        if np.argmax(prediction[:, 1]) == np.argmax(y):
-            correct += 1
-    return correct/len(test_y)
 
 
 if __name__ == "__main__":

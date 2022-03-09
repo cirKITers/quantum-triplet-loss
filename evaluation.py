@@ -102,3 +102,12 @@ def evaluate_bc(train_x, train_y, test_x, test_y,
         plot_3d(classes, values, centers, step, accuracy, show, save)
 
     return accuracy
+
+
+def evaluate_classical(test_x, test_y, qNode, params):
+    correct = 0
+    for x, y in zip(test_x, test_y):
+        prediction = qNode(params, x)
+        if np.argmax(prediction[:, 1]) == np.argmax(y):
+            correct += 1
+    return correct/len(test_y)
