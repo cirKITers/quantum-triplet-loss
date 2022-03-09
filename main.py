@@ -5,21 +5,21 @@ from plotting import plot_curves
 from data import load_mnist, mnist_apn_generator
 from data import load_breast_cancer_lju, bc_apn_generator
 from data import load_moons_dataset, moons_apn_generator
-from evaluation import evaluate_mnist, evaluate_bc
+from evaluation import evaluate
 
 
 SEED = 1337
 np.random.seed(SEED)
 random.seed(SEED)
 
-QUBITS = 9
-DATA_QUBITS = 9
+QUBITS = 4
+DATA_QUBITS = 4
 OUTPUT_QUBITS = 2
 LAYERS = 5
 
-TRAIN_SIZE = 150
-TEST_SIZE = 100
-CLASSES = ("one moon", "the other moon")
+TRAIN_SIZE = 2500
+TEST_SIZE = 400
+CLASSES = (3, 6)
 
 STEPS = 501
 TEST_EVERY = 250
@@ -123,30 +123,21 @@ def train(dataset: str):
             losses.append((step, np.average(current_losses)))
             current_losses = []
 
-        if step % 100 == 0:
+        if step % TEST_EVERY == 0:
             g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
             gradients.append(np.var(g))
             print("Gradients", np.var(g))
 
         if step % TEST_EVERY == 0:
-            if dataset == "mnist":
-                accuracy, dbi = evaluate_mnist(train_x, train_y,
-                                               test_x, test_y,
-                                               qNode, params, step,
-                                               CLASSES, OUTPUT_QUBITS
-                                               )
-                dbis.append((step, dbi))
-
-            elif dataset == "bc" or dataset == "moons":
-                accuracy = evaluate_bc(train_x, train_y,
-                                       test_x, test_y,
-                                       qNode, params, step,
-                                       CLASSES, OUTPUT_QUBITS
-                                       )
-
+            accuracy, dbi = evaluate(dataset, train_x, train_y,
+                                     test_x, test_y,
+                                     qNode, params, step,
+                                     CLASSES, OUTPUT_QUBITS
+                                     )
             accuracys.append((step, accuracy))
+            dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
-
+    
         # if (step+1) % UPDATE_SZ_EVERY == 0:
         #     stepsize *= SZ_FACTOR
         #     optimizer.stepsize = stepsize
@@ -174,4 +165,4 @@ def train(dataset: str):
 
 
 if __name__ == "__main__":
-    train("bc")
+    train("mnist")
