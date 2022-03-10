@@ -165,4 +165,4 @@ def train(dataset: str):
 
 
 if __name__ == "__main__":
-    train("mnist")
+    train("bc")
