@@ -32,7 +32,8 @@ def evaluate(dataset, train_x, train_y, test_x, test_y,
     # store label and output
     for index, (label, datum) in enumerate(zip(test_y, test_x)):
         output = qNode(params, datum)
-        values[index, 0] = np.argmax(label)
+        values[index, 0] = np.argmax(label) if dataset == "mnist" \
+                                            else label
         for i in range(len(output)):
             values[index, 1+i] = output[i]
 
