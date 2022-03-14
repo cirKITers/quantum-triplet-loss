@@ -58,7 +58,8 @@ def train():
     optimizer = qml.AdamOptimizer(stepsize)
 
     def cost_fn(params):
-        return triplet_loss(params, qNode, anchor, positive, negative, hp["alpha"])
+        return triplet_loss(params, qNode, anchor,
+                            positive, negative, hp["alpha"])
 
     params = np.random.uniform(low=-np.pi, high=np.pi,
                                size=(hp["layers"], hp["qubits"], 2)
@@ -97,7 +98,6 @@ def train():
     current_losses = []
     gradients = []
 
-
     for step in range(hp["steps"]):
         anchor, positive, negative = next(apn_generator)
 
@@ -124,7 +124,7 @@ def train():
             accuracys.append((step, accuracy))
             dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
-    
+
         # if (step+1) % hp["update_sz_every"] == 0:
         #     stepsize *= hp["sz_factor"]
         #     optimizer.stepsize = stepsize
@@ -152,11 +152,13 @@ def train():
 
     with open(f"./trainings/{starting_time}.json", "w") as json_file:
         json.dump(hp, json_file)
-    np.savez(f"./trainings/{starting_time}.npz", accuracys=accuracys, 
-                                                dbis=dbis,
-                                                losses=losses,
-                                                gradients=gradients,
-                                                params=params)
+    np.savez(f"./trainings/{starting_time}.npz",
+             accuracys=accuracys,
+             dbis=dbis,
+             losses=losses,
+             gradients=gradients,
+             params=params
+             )
 
 
 if __name__ == "__main__":
