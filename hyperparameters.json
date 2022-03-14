@@ -1,0 +1,19 @@
+{
+    "dataset": "mnist",
+    "qubits": 4,
+    "data_qubits": 4,
+    "output_qubits": 2,
+    "layers": 5,
+    "train_size": 2500,
+    "test_size": 400,
+    "classes": [3, 6],
+    "steps": 1001,
+    "test_every": 250,
+    "grads_every": 10,
+    "start_stepsize": 0.005,
+    "update_sz_every": 35000,
+    "sz_factor": 0.1,
+    "alpha": 1.0,
+    "shots": null,
+    "seed": 1337
+}

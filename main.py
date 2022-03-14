@@ -1,6 +1,8 @@
 import random
 import pennylane as qml
+import json
 from pennylane import numpy as np
+from time import localtime, strftime
 from plotting import plot_curves
 from data import load_mnist, mnist_apn_generator
 from data import load_breast_cancer_lju, bc_apn_generator
@@ -8,47 +10,32 @@ from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate
 
 
-SEED = 1337
-np.random.seed(SEED)
-random.seed(SEED)
+with open('hyperparameters.json') as json_file:
+    hp = json.load(json_file)
+print(hp)
 
-QUBITS = 4
-DATA_QUBITS = 4
-OUTPUT_QUBITS = 2
-LAYERS = 5
+starting_time = strftime("%Y-%m-%d_%H-%M-%S", localtime())
 
-TRAIN_SIZE = 2500
-TEST_SIZE = 400
-CLASSES = (3, 6)
-
-STEPS = 501
-TEST_EVERY = 250
-
-START_STEPSIZE = 0.005
-UPDATE_SZ_EVERY = 35000
-SZ_FACTOR = 0.1
-
-ALPHA = 1.0
-
-SHOTS = None
+np.random.seed(hp["seed"])
+random.seed(hp["seed"])
 
 
 def circuit(params, data):
     qml.templates.embeddings.AngleEmbedding(
-            features=data, wires=range(DATA_QUBITS), rotation="X"
+            features=data, wires=range(hp["data_qubits"]), rotation="X"
         )
 
-    for layer in range(LAYERS):
-        for wire in range(QUBITS):
+    for layer in range(hp["layers"]):
+        for wire in range(hp["qubits"]):
             qml.RX(params[layer][wire][0], wires=wire)
             qml.RY(params[layer][wire][1], wires=wire)
-        for wire in range(0, QUBITS - 1, 2):
+        for wire in range(0, hp["qubits"] - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-        for wire in range(1, QUBITS - 1, 2):
+        for wire in range(1, hp["qubits"] - 1, 2):
             qml.CZ(wires=[wire, wire + 1])
-    # return [qml.expval(qml.PauliZ(i)) for i in range(OUTPUT_QUBITS)]
+    # return [qml.expval(qml.PauliZ(i)) for i in range(hp["output_qubits"])]
     return [qml.expval(qml.PauliZ(2*x) @ qml.PauliZ((2*x)+1))
-            for x in range(OUTPUT_QUBITS)]
+            for x in range(hp["output_qubits"])]
 
 
 def triplet_loss(params, qNode, anchor, positive, negative, alpha):
@@ -62,44 +49,43 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
     return max(dist_a_p - dist_a_n + alpha, 0.0)
 
 
-def train(dataset: str):
-    assert(dataset in ["mnist", "bc", "moons"])
-    dev = qml.device('default.qubit', wires=QUBITS, shots=SHOTS)
+def train():
+    assert(hp["dataset"] in ["mnist", "bc", "moons"])
+    dev = qml.device('default.qubit', wires=hp["qubits"], shots=hp["shots"])
     qNode = qml.QNode(func=circuit, device=dev)
 
-    stepsize = START_STEPSIZE
+    stepsize = hp["start_stepsize"]
     optimizer = qml.AdamOptimizer(stepsize)
 
     def cost_fn(params):
-        return triplet_loss(params, qNode, anchor, positive, negative, ALPHA)
+        return triplet_loss(params, qNode, anchor, positive, negative, hp["alpha"])
 
     params = np.random.uniform(low=-np.pi, high=np.pi,
-                               size=(LAYERS, QUBITS, 2)
+                               size=(hp["layers"], hp["qubits"], 2)
                                )
 
-    if dataset == "mnist":
-        train_x, train_y, test_x, test_y = load_mnist(seed=SEED,
-                                                      train_size=TRAIN_SIZE,
-                                                      test_size=TEST_SIZE,
-                                                      classes=CLASSES,
-                                                      wires=QUBITS
+    if hp["dataset"] == "mnist":
+        train_x, train_y, test_x, test_y = load_mnist(seed=hp["seed"],
+                                                      train_size=hp["train_size"],
+                                                      test_size=hp["test_size"],
+                                                      classes=hp["classes"],
+                                                      wires=hp["qubits"]
                                                       )
 
         apn_generator = mnist_apn_generator(train_x,
                                             train_y,
-                                            n_cls=len(CLASSES)
+                                            n_cls=len(hp["classes"])
                                             )
-    elif dataset == "bc":
-        train_x, train_y, test_x, test_y = load_breast_cancer_lju(TRAIN_SIZE,
-                                                                  TEST_SIZE
+    elif hp["dataset"] == "bc":
+        train_x, train_y, test_x, test_y = load_breast_cancer_lju(hp["train_size"],
+                                                                  hp["test_size"]
                                                                   )
-
         apn_generator = bc_apn_generator(train_x,
                                          train_y
                                          )
-    elif dataset == "moons":
-        train_x, train_y, test_x, test_y = load_moons_dataset(TRAIN_SIZE,
-                                                              TEST_SIZE
+    elif hp["dataset"] == "moons":
+        train_x, train_y, test_x, test_y = load_moons_dataset(hp["train_size"],
+                                                              hp["test_size"]
                                                               )
         apn_generator = moons_apn_generator(train_x,
                                             train_y
@@ -111,35 +97,36 @@ def train(dataset: str):
     current_losses = []
     gradients = []
 
-    for step in range(STEPS):
+
+    for step in range(hp["steps"]):
         anchor, positive, negative = next(apn_generator)
 
         params, c = optimizer.step_and_cost(cost_fn, params)
 
-        print(f"step {step:{len(str(STEPS))}}| cost {c:8.5f}")
+        print(f"step {step:{len(str(hp['steps']))}}| cost {c:8.5f}")
 
         current_losses.append(c)
         if len(current_losses) > 24:
             losses.append((step, np.average(current_losses)))
             current_losses = []
 
-        if step % TEST_EVERY == 0:
+        if step % hp["grads_every"] == 0:
             g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
             gradients.append(np.var(g))
             print("Gradients", np.var(g))
 
-        if step % TEST_EVERY == 0:
-            accuracy, dbi = evaluate(dataset, train_x, train_y,
+        if step % hp["test_every"] == 0:
+            accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
                                      test_x, test_y,
                                      qNode, params, step,
-                                     CLASSES, OUTPUT_QUBITS
+                                     hp["classes"], hp["output_qubits"]
                                      )
             accuracys.append((step, accuracy))
             dbis.append((step, dbi))
             print("Accuracys:\n", accuracys)
     
-        # if (step+1) % UPDATE_SZ_EVERY == 0:
-        #     stepsize *= SZ_FACTOR
+        # if (step+1) % hp["update_sz_every"] == 0:
+        #     stepsize *= hp["sz_factor"]
         #     optimizer.stepsize = stepsize
         #     print("Updated stepsize to", stepsize)
 
@@ -157,12 +144,20 @@ def train(dataset: str):
     plot_curves(np.array(accuracys),
                 np.array(dbis),
                 np.array(losses),
-                f"Qubits: {QUBITS}, " +
-                f"Layers: {LAYERS}, " +
-                f"Classes: {CLASSES}, " +
-                f"Output_dim: {OUTPUT_QUBITS}"
+                f"Qubits: {hp['qubits']}, " +
+                f"Layers: {hp['layers']}, " +
+                f"Classes: {hp['classes']}, " +
+                f"Output_dim: {hp['output_qubits']}"
                 )
+
+    with open(f"./trainings/{starting_time}.json", "w") as json_file:
+        json.dump(hp, json_file)
+    np.savez(f"./trainings/{starting_time}.npz", accuracys=accuracys, 
+                                                dbis=dbis,
+                                                losses=losses,
+                                                gradients=gradients,
+                                                params=params)
 
 
 if __name__ == "__main__":
-    train("bc")
+    train()
