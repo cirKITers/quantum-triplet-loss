@@ -95,20 +95,16 @@ def train():
     accuracys = []
     dbis = []
     losses = []
-    current_losses = []
     gradients = []
 
-    for step in range(hp["steps"]):
+    for step in range(hp["steps"] + 1):
         anchor, positive, negative = next(apn_generator)
 
         params, c = optimizer.step_and_cost(cost_fn, params)
 
         print(f"step {step:{len(str(hp['steps']))}}| cost {c:8.5f}")
 
-        current_losses.append(c)
-        if len(current_losses) > 24:
-            losses.append((step, np.average(current_losses)))
-            current_losses = []
+        losses.append(c)
 
         if step % hp["grads_every"] == 0:
             g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)

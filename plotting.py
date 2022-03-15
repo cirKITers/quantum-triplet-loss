@@ -89,7 +89,7 @@ def plot_curves(accuracys, dbis, loss, title):
     plt.plot(accuracys[:, 0], accuracys[:, 1], label="Accuracy")
     if len(dbis) > 0:
         plt.plot(dbis[:, 0], dbis[:, 1], label="Davis Bouldin Index")
-    plt.plot(loss[:, 0], loss[:, 1], label="Loss")
+    plt.plot(np.arange(len(loss)), loss, label="Loss")
     plt.title(title)
     plt.ylim(ymax = 3)
     plt.legend()
