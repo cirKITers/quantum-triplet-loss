@@ -111,15 +111,15 @@ def train():
             gradients.append(np.var(g))
             print("Gradients", np.var(g))
 
-        if step % hp["test_every"] == 0:
-            accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
-                                     test_x, test_y,
-                                     qNode, params, step,
-                                     hp["classes"], hp["output_qubits"]
-                                     )
-            accuracys.append((step, accuracy))
-            dbis.append((step, dbi))
-            print("Accuracys:\n", accuracys)
+        # if step % hp["test_every"] == 0:
+        #     accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
+        #                              test_x, test_y,
+        #                              qNode, params, step,
+        #                              hp["classes"], hp["output_qubits"]
+        #                              )
+        #     accuracys.append((step, accuracy))
+        #     dbis.append((step, dbi))
+        #     print("Accuracys:\n", accuracys)
 
         # if (step+1) % hp["update_sz_every"] == 0:
         #     stepsize *= hp["sz_factor"]
@@ -136,45 +136,49 @@ def train():
 
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
+        return np.average(gradients)
 
-    plot_curves(np.array(accuracys),
-                np.array(dbis),
-                np.array(losses),
-                f"Qubits: {hp['qubits']}, " +
-                f"Layers: {hp['layers']}, " +
-                f"Classes: {hp['classes']}, " +
-                f"Output_dim: {hp['output_qubits']}"
-                )
+    # plot_curves(np.array(accuracys),
+    #             np.array(dbis),
+    #             np.array(losses),
+    #             f"Qubits: {hp['qubits']}, " +
+    #             f"Layers: {hp['layers']}, " +
+    #             f"Classes: {hp['classes']}, " +
+    #             f"Output_dim: {hp['output_qubits']}"
+    #             )
 
-    with open(f"./trainings/{starting_time}.json", "w") as json_file:
-        json.dump(hp, json_file)
-    np.savez(f"./trainings/{starting_time}.npz",
-             accuracys=accuracys,
-             dbis=dbis,
-             losses=losses,
-             gradients=gradients,
-             params=params
-             )
+    # with open(f"./trainings/{starting_time}.json", "w") as json_file:
+    #     json.dump(hp, json_file)
+    # np.savez(f"./trainings/{starting_time}.npz",
+    #          accuracys=accuracys,
+    #          dbis=dbis,
+    #          losses=losses,
+    #          gradients=gradients,
+    #          params=params
+    #          )
 
 
 if __name__ == "__main__":
-    # n_layers = [5, 10, 15, 20, 25, 30]
-    # n_qubits = [4, 6, 8, 10, 12]
-    # seeds = [1]
+    n_layers = [5, 25, 50, 75, 100]
+    n_qubits = [4, 6, 8, 10, 12]
+    seeds = [1, 2, 3, 4, 5]
 
-    # gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
+    gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
 
-    # for il, l in enumerate(n_layers):
-    #     for iq, q in enumerate(n_qubits):
-    #         for js, s in enumerate(seeds):
-    #             hp["layers"] = l
-    #             hp["qubits"] = q
-    #             hp["seeds"] = s
-    #             print(l, q, s)
-    #             grad = train()
-    #             gradients[il, iq, js] = grad
+    for il, l in enumerate(n_layers):
+        for iq, q in enumerate(n_qubits):
+            for js, s in enumerate(seeds):
+                hp["layers"] = l
+                hp["qubits"] = q
+                hp["seeds"] = s
+                print(l, q, s)
+                grad = train()
+                gradients[il, iq, js] = grad
 
-    # np.savez(f"./trainings/{starting_time}_grads.npz", grads=gradients)
-    # print(gradients)
+    np.savez(f"./trainings/{starting_time}_grads.npz", grads=gradients,
+                                                       n_layers=np.array(n_layers),
+                                                       n_qubits=np.array(n_qubits),
+                                                       seeds=np.array(seeds))
+    print(gradients)
 
-    train()
+    # train()
