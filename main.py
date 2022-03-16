@@ -9,7 +9,7 @@ from data import load_breast_cancer_lju, bc_apn_generator
 from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate
 
-
+hp = None
 with open('hyperparameters.json') as json_file:
     hp = json.load(json_file)
 print(hp)
@@ -70,7 +70,7 @@ def train():
                                                       train_size=hp["train_size"],
                                                       test_size=hp["test_size"],
                                                       classes=hp["classes"],
-                                                      wires=hp["qubits"]
+                                                      wires=hp["data_qubits"]
                                                       )
 
         apn_generator = mnist_apn_generator(train_x,
@@ -158,4 +158,23 @@ def train():
 
 
 if __name__ == "__main__":
+    # n_layers = [5, 10, 15, 20, 25, 30]
+    # n_qubits = [4, 6, 8, 10, 12]
+    # seeds = [1]
+
+    # gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
+
+    # for il, l in enumerate(n_layers):
+    #     for iq, q in enumerate(n_qubits):
+    #         for js, s in enumerate(seeds):
+    #             hp["layers"] = l
+    #             hp["qubits"] = q
+    #             hp["seeds"] = s
+    #             print(l, q, s)
+    #             grad = train()
+    #             gradients[il, iq, js] = grad
+
+    # np.savez(f"./trainings/{starting_time}_grads.npz", grads=gradients)
+    # print(gradients)
+
     train()
