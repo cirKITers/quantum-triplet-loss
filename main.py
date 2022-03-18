@@ -109,17 +109,18 @@ def train():
         if step % hp["grads_every"] == 0:
             g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
             gradients.append(np.var(g))
-            print("Gradients", np.var(g))
+            print("Gradients", g[0][0, 0, 0])
+            return g[0][0, 0, 0]
 
-        # if step % hp["test_every"] == 0:
-        #     accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
-        #                              test_x, test_y,
-        #                              qNode, params, step,
-        #                              hp["classes"], hp["output_qubits"]
-        #                              )
-        #     accuracys.append((step, accuracy))
-        #     dbis.append((step, dbi))
-        #     print("Accuracys:\n", accuracys)
+        if step % hp["test_every"] == 0:
+            accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
+                                     test_x, test_y,
+                                     qNode, params, step,
+                                     hp["classes"], hp["output_qubits"]
+                                     )
+            accuracys.append((step, accuracy))
+            dbis.append((step, dbi))
+            print("Accuracys:\n", accuracys)
 
         # if (step+1) % hp["update_sz_every"] == 0:
         #     stepsize *= hp["sz_factor"]
@@ -138,30 +139,30 @@ def train():
         print("Gradients Avg: ", np.average(gradients))
         return np.average(gradients)
 
-    # plot_curves(np.array(accuracys),
-    #             np.array(dbis),
-    #             np.array(losses),
-    #             f"Qubits: {hp['qubits']}, " +
-    #             f"Layers: {hp['layers']}, " +
-    #             f"Classes: {hp['classes']}, " +
-    #             f"Output_dim: {hp['output_qubits']}"
-    #             )
+    plot_curves(np.array(accuracys),
+                np.array(dbis),
+                np.array(losses),
+                f"Qubits: {hp['qubits']}, " +
+                f"Layers: {hp['layers']}, " +
+                f"Classes: {hp['classes']}, " +
+                f"Output_dim: {hp['output_qubits']}"
+                )
 
-    # with open(f"./trainings/{starting_time}.json", "w") as json_file:
-    #     json.dump(hp, json_file)
-    # np.savez(f"./trainings/{starting_time}.npz",
-    #          accuracys=accuracys,
-    #          dbis=dbis,
-    #          losses=losses,
-    #          gradients=gradients,
-    #          params=params
-    #          )
+    with open(f"./trainings/{starting_time}.json", "w") as json_file:
+        json.dump(hp, json_file)
+    np.savez(f"./trainings/{starting_time}.npz",
+             accuracys=accuracys,
+             dbis=dbis,
+             losses=losses,
+             gradients=gradients,
+             params=params
+             )
 
 
 if __name__ == "__main__":
     n_layers = [5, 25, 50, 75, 100]
     n_qubits = [4, 6, 8, 10, 12]
-    seeds = [1, 2, 3, 4, 5]
+    seeds = list(range(100))
 
     gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
 
