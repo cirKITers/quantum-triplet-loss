@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from pennylane import numpy as np
 
 
-GG = 100
+GG = 150
 
 
 def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True, cont=True, dbi=None):
@@ -12,16 +12,21 @@ def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True
               ("gold", "orange"),
               ("violet", "fuchsia"),
               ]
+    markers = ["o", "s", "^", "*"]
+
     plt.figure(figsize=(6,6))
 
     for index, center in enumerate(centers.values()):
         rows = np.where(values[:, 0] == index)
 
         marker_color, center_color = colors.pop(0)
+        marker = markers.pop(0)
+
         plt.scatter(values[rows][:, 1], values[rows][:, 2],
-                    color=marker_color, alpha=0.4, label=str(classes[index]))
-        plt.plot(center[0], center[1], color=center_color,
-                 alpha=0.9, ms=13, marker="*", markeredgecolor="black")
+                    color=marker_color, alpha=0.4, label=str(classes[index]), 
+                    edgecolors="black", marker=marker)
+        plt.plot(center[0], center[1], color=marker_color,
+                 alpha=0.9, ms=13, marker=marker, markeredgecolor="black")
 
     if cont:
         grid = np.linspace(-1, 1, GG)
