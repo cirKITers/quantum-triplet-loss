@@ -96,6 +96,7 @@ def train():
                 g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
                 gradients.append(np.var(g))
                 print("Gradients", np.var(g))
+                return g[0][0, 0, 0]
 
             # if step % hp["test_every"] == 0:
             #     accuracy = evaluate_classical(test_x, test_y, qNode, params)
@@ -123,9 +124,9 @@ def train():
     #          )
 
 if __name__ == "__main__":
-    n_layers = [5, 10, 15, 20, 25, 30]
+    n_layers = [5, 25, 50, 75, 100]
     n_qubits = [4, 6, 8, 10, 12]
-    seeds = [1]
+    seeds = list(range(100))
 
     gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
 
