@@ -49,7 +49,7 @@ def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True
     if show:
         plt.show()
     if save:
-        plt.savefig("./images/" + str(step) + ".png")
+        plt.savefig("./images/" + str(step) + ".png", bbox_inches='tight')
     plt.close()
 
 
@@ -85,7 +85,7 @@ def plot_3d(classes, values, centers, step, accuracy, show=False, save=True, dbi
     if show:
         plt.show()
     if save:
-        plt.savefig("./images/" + str(step) + ".png")
+        plt.savefig("./images/" + str(step) + ".png", bbox_inches='tight')
     plt.close()
 
 
