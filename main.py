@@ -9,7 +9,7 @@ from data import load_breast_cancer_lju, bc_apn_generator
 from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate
 
-hp = None
+
 with open('hyperparameters.json') as json_file:
     hp = json.load(json_file)
 print(hp)
@@ -108,9 +108,9 @@ def train():
 
         if step % hp["grads_every"] == 0:
             g, _ = optimizer.compute_grad(cost_fn, (params,), {}, None)
-            gradients.append(np.var(g))
-            print("Gradients", g[0][0, 0, 0])
-            return g[0][0, 0, 0]
+            gradients.append(np.average(np.abs(g)))
+            # print("Gradients", g[0][0, 0, 0])
+            # return g[0][0, 0, 0]
 
         if step % hp["test_every"] == 0:
             accuracy, dbi = evaluate(hp["dataset"], train_x, train_y,
@@ -137,7 +137,6 @@ def train():
 
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
-        return np.average(gradients)
 
     plot_curves(np.array(accuracys),
                 np.array(dbis),
@@ -160,26 +159,26 @@ def train():
 
 
 if __name__ == "__main__":
-    n_layers = [5, 25, 50, 75, 100]
-    n_qubits = [4, 6, 8, 10, 12]
-    seeds = list(range(100))
+    # n_layers = [5, 25, 50, 75, 100]
+    # n_qubits = [4, 6, 8, 10, 12]
+    # seeds = list(range(100))
 
-    gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
+    # gradients = np.zeros((len(n_layers), len(n_qubits), len(seeds)))
 
-    for il, l in enumerate(n_layers):
-        for iq, q in enumerate(n_qubits):
-            for js, s in enumerate(seeds):
-                hp["layers"] = l
-                hp["qubits"] = q
-                hp["seeds"] = s
-                print(l, q, s)
-                grad = train()
-                gradients[il, iq, js] = grad
+    # for il, l in enumerate(n_layers):
+    #     for iq, q in enumerate(n_qubits):
+    #         for js, s in enumerate(seeds):
+    #             hp["layers"] = l
+    #             hp["qubits"] = q
+    #             hp["seeds"] = s
+    #             print(l, q, s)
+    #             grad = train()
+    #             gradients[il, iq, js] = grad
 
-    np.savez(f"./trainings/{starting_time}_grads.npz", grads=gradients,
-                                                       n_layers=np.array(n_layers),
-                                                       n_qubits=np.array(n_qubits),
-                                                       seeds=np.array(seeds))
-    print(gradients)
+    # np.savez(f"./trainings/{starting_time}_grads.npz", grads=gradients,
+    #                                                    n_layers=np.array(n_layers),
+    #                                                    n_qubits=np.array(n_qubits),
+    #                                                    seeds=np.array(seeds))
+    # print(gradients)
 
-    # train()
+    train()
