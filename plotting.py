@@ -38,10 +38,10 @@ def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True
         ax = plt.gca()
         ax.contour(xx, yy, zz, len(classes)-2, colors='black')
 
-    if dbi == None:
-        plt.title(f"Step: {step} | Acc: {accuracy:.3f}")
-    else:
-        plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
+    # if dbi == None:
+    #     plt.title(f"Step: {step} | Acc: {accuracy:.3f}")
+    # else:
+    #     plt.title(f"Step: {step} | Acc: {accuracy:.3f} | DBI: {dbi:.3f}")
     plt.ylim(-1, 1)
     plt.xlim(-1, 1)
     plt.legend()

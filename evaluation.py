@@ -55,11 +55,12 @@ def evaluate(dataset, train_x, train_y, test_x, test_y,
     dbi = davies_bouldin_index(len(classes), values, c_distances)
     print("Davies Bouldin Index:", dbi)
 
-    if output_qubits == 2:
-        plot_2d(classes, values, centers, step, clf,
-                accuracy, show, save, cont, dbi)
-    elif output_qubits == 3:
-        plot_3d(classes, values, centers, step, accuracy, show, save, dbi)
+    if show or save:
+        if output_qubits == 2:
+            plot_2d(classes, values, centers, step, clf,
+                    accuracy, show, save, cont, dbi)
+        elif output_qubits == 3:
+            plot_3d(classes, values, centers, step, accuracy, show, save, dbi)
 
     return accuracy, dbi
 
