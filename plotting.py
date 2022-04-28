@@ -12,7 +12,7 @@ def plot_2d(classes, values, centers, step, clf, accuracy, show=False, save=True
               ("gold", "orange"),
               ("violet", "fuchsia"),
               ]
-    markers = ["o", "s", "^", "*"]
+    markers = ["o", "s", "^", "X"]
 
     plt.figure(figsize=(6,6))
 
