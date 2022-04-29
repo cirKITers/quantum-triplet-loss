@@ -7,6 +7,7 @@ from maskit.datasets import load_data
 
 np.random.seed(1337)
 BC_PATH = "./datasets/breast_cancer/breast-cancer.data"
+MNIST_AE_PATH = "./datasets/mnist_ae"
 
 
 def load_breast_cancer_lju(train_size=150, test_size=100, shuffle=True):
@@ -90,6 +91,36 @@ def mnist_apn_generator(train_x, train_y, n_cls):
         yield anchor, positive, negative
 
 
+def load_mnist_ae(train_size, test_size, classes, wires):
+    file_name = str(classes).replace(" ", "")
+    train_data = np.load(MNIST_AE_PATH + "/Train_" + file_name +
+                        "_features_" + str(wires) + ".npz")
+    test_data = np.load(MNIST_AE_PATH + "/Test_" + file_name +
+                        "_features_" + str(wires) + ".npz")
+
+    assert(train_size <= len(train_data["labels"]))
+    assert(test_size <= len(test_data["labels"]))
+
+    x_train = train_data["features"][:train_size]
+    x_test = test_data["features"][:test_size]
+
+    # creating a one-hot-encoding for the labels
+    y_train = np.zeros((train_size, len(train_data["classes"])))                  
+    for i in range(train_size):
+        y_train[i, list(train_data["classes"]).index(train_data["labels"][i])] = 1
+
+    y_test = np.zeros((test_size, len(test_data["classes"])))                
+    for i in range(test_size):
+        y_test[i, list(test_data["classes"]).index(test_data["labels"][i])] = 1
+
+    return (
+            x_train,
+            y_train,
+            x_test,
+            y_test
+            )
+
+
 def bc_apn_generator(train_x, train_y):
     _, unique_elements = np.unique(train_x, return_index=True, axis=0)
 
@@ -158,18 +189,18 @@ def moons_apn_generator(train_x, train_y):
 
 
 if __name__ == "__main__":
-    # dataset = load_mnist(1337, 100, 50, [3, 6], 4)
-    # for d in dataset:
-    #     print(d.shape)
-    # train_x, train_y, test_x, test_y = dataset
-    # print(train_y[0])
-
-    dataset = load_breast_cancer_lju(shuffle=False)
+    dataset = load_mnist_ae(100, 50, [3, 6], 4)
     for d in dataset:
         print(d.shape)
     train_x, train_y, test_x, test_y = dataset
-    for label, features in zip(train_y, train_x):
-        print(label, features)
+    print(test_y)
+
+    # dataset = load_breast_cancer_lju(shuffle=False)
+    # for d in dataset:
+    #     print(d.shape)
+    # train_x, train_y, test_x, test_y = dataset
+    # for label, features in zip(train_y, train_x):
+    #     print(label, features)
 
     # dataset = load_moons_dataset()
     # for d in dataset:

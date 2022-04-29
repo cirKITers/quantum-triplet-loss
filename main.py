@@ -5,6 +5,7 @@ from pennylane import numpy as np
 from time import localtime, strftime
 from plotting import plot_curves
 from data import load_mnist, mnist_apn_generator
+from data import load_mnist_ae
 from data import load_breast_cancer_lju, bc_apn_generator
 from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate
@@ -50,7 +51,7 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
 
 
 def train():
-    assert(hp["dataset"] in ["mnist", "bc", "moons"])
+    assert(hp["dataset"] in ["mnist", "mnist_ae", "bc", "moons"])
     dev = qml.device('default.qubit', wires=hp["qubits"], shots=hp["shots"])
     qNode = qml.QNode(func=circuit, device=dev)
 
@@ -72,6 +73,17 @@ def train():
                                                       classes=hp["classes"],
                                                       wires=hp["data_qubits"]
                                                       )
+
+        apn_generator = mnist_apn_generator(train_x,
+                                            train_y,
+                                            n_cls=len(hp["classes"])
+                                            )
+    elif hp["dataset"] == "mnist_ae":
+        train_x, train_y, test_x, test_y = load_mnist_ae(train_size=hp["train_size"],
+                                                         test_size=hp["test_size"],
+                                                         classes=hp["classes"],
+                                                         wires=hp["data_qubits"]
+                                                         )
 
         apn_generator = mnist_apn_generator(train_x,
                                             train_y,

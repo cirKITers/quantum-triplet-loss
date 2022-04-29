@@ -9,7 +9,7 @@ def evaluate(dataset, train_x, train_y, test_x, test_y,
              show=False, save=True, cont=True):
 
     svm = SVC(kernel="linear")
-    if dataset == "mnist":
+    if dataset == "mnist" or dataset == "mnist_ae":
         clf = svm.fit([qNode(params, x) for x in train_x],
                     [np.argmax(y) for y in train_y]
                     )
@@ -32,7 +32,7 @@ def evaluate(dataset, train_x, train_y, test_x, test_y,
     # store label and output
     for index, (label, datum) in enumerate(zip(test_y, test_x)):
         output = qNode(params, datum)
-        values[index, 0] = np.argmax(label) if dataset == "mnist" \
+        values[index, 0] = np.argmax(label) if "mnist" in dataset \
                                             else label
         for i in range(len(output)):
             values[index, 1+i] = output[i]
