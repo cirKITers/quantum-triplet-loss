@@ -150,15 +150,6 @@ def train():
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
 
-    plot_curves(np.array(accuracys),
-                np.array(dbis),
-                np.array(losses),
-                f"Qubits: {hp['qubits']}, " +
-                f"Layers: {hp['layers']}, " +
-                f"Classes: {hp['classes']}, " +
-                f"Output_dim: {hp['output_qubits']}"
-                )
-
     with open(f"./trainings/{starting_time}.json", "w") as json_file:
         json.dump(hp, json_file)
     np.savez(f"./trainings/{starting_time}.npz",
@@ -169,6 +160,15 @@ def train():
              params=params
              )
 
+    # plot_curves(np.array(accuracys),
+    #             np.array(dbis),
+    #             np.array(losses),
+    #             f"Qubits: {hp['qubits']}, " +
+    #             f"Layers: {hp['layers']}, " +
+    #             f"Classes: {hp['classes']}, " +
+    #             f"Output_dim: {hp['output_qubits']}"
+    #             )
+    
 
 if __name__ == "__main__":
     # n_layers = [5, 25, 50, 75, 100]
