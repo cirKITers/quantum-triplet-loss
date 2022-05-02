@@ -46,6 +46,7 @@ def loss(params, qNode, x, y):
 
 def train():
     assert(hp["dataset"] in ["mnist", "mnist_ae", "bc", "moons"])
+    hp["output_qubits"] = len(hp["classes"])
     dev = qml.device('default.qubit', wires=hp["qubits"], shots=hp["shots"])
     qNode = qml.QNode(func=circuit, device=dev)
 
