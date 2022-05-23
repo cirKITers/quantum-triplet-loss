@@ -1,6 +1,7 @@
 import random
 import pennylane as qml
 import json
+import sys
 from pennylane import numpy as np
 from time import localtime, strftime
 from plotting import plot_curves
@@ -14,6 +15,9 @@ from evaluation import evaluate
 with open('hyperparameters.json') as json_file:
     hp = json.load(json_file)
 print(hp)
+
+if len(sys.argv) == 2:
+    hp["output_qubits"] = int(sys.argv[1])
 
 starting_time = strftime("%Y-%m-%d_%H-%M-%S", localtime())
 
@@ -141,18 +145,23 @@ def train():
 
     if accuracys:
         print("Accuracys:\n", accuracys)
-        print("Maximum: ", max(np.array(accuracys)[:, 1]))
+        top_acc = max(np.array(accuracys)[:, 1])
+        print("Maximum: ", top_acc)
+        hp["top_acc"] = float(top_acc)
 
     if dbis:
         print("DBIs:\n", dbis)
-        print("Minimum:", min(np.array(dbis)[:, 1]))
+        top_dbi = min(np.array(dbis)[:, 1])
+        print("Minimum:", top_dbi)
+        hp["top_dbi"] = float(top_dbi)
 
     if gradients:
         print("Gradients Avg: ", np.average(gradients))
 
-    with open(f"./trainings/{starting_time}.json", "w") as json_file:
+    name = f"{starting_time}_{hp['output_qubits']}"
+    with open(f"./trainings/{name}.json", "w") as json_file:
         json.dump(hp, json_file)
-    np.savez(f"./trainings/{starting_time}.npz",
+    np.savez(f"./trainings/{name}.npz",
              accuracys=accuracys,
              dbis=dbis,
              losses=losses,
