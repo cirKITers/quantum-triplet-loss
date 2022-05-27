@@ -117,8 +117,10 @@ def train():
 
     if accuracys:
         print("Accuracys:\n", accuracys)
-        print("Maximum: ", max(np.array(accuracys)[:, 1]))
-
+        top_acc = max(np.array(accuracys)[:, 1])
+        print("Maximum: ", top_acc)
+        hp["top_acc"] = float(top_acc)
+        
     print("Gradients Avg: ", np.average(gradients))
 
     with open(f"./trainings/{starting_time}_classical.json", "w") as json_file:
