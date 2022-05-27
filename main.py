@@ -10,6 +10,10 @@ from data import load_mnist_ae
 from data import load_breast_cancer_lju, bc_apn_generator
 from data import load_moons_dataset, moons_apn_generator
 from evaluation import evaluate
+from qiskit import IBMQ
+
+IBMQ.load_account()
+# provider = IBMQ.enable_account("ibm-q-education/karlsruhe-inst-t-1/girls-day")
 
 
 with open('hyperparameters.json') as json_file:
@@ -56,7 +60,14 @@ def triplet_loss(params, qNode, anchor, positive, negative, alpha):
 
 def train():
     assert(hp["dataset"] in ["mnist", "mnist_ae", "bc", "moons"])
-    dev = qml.device('default.qubit', wires=hp["qubits"], shots=hp["shots"])
+    # dev = qml.device('default.qubit', wires=hp["qubits"], shots=hp["shots"])
+    dev = qml.device('qiskit.ibmq', 
+                     wires=hp["qubits"], 
+                     backend="ibmq_qasm_simulator", 
+                     shots=hp["shots"],
+                    #  provider=provider
+                     )
+
     qNode = qml.QNode(func=circuit, device=dev)
 
     stepsize = hp["start_stepsize"]

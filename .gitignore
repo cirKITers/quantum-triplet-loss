@@ -1,5 +1,6 @@
 images/
-trainings/
+trainings/*
+!trainings/results.ods
 hyperparameters.json
 .~lock.*
 
