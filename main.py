@@ -108,6 +108,7 @@ def train():
         apn_generator = moons_apn_generator(train_x,
                                             train_y
                                             )
+        hp["classes"] = ["Moon 1", "Moon 2"]
 
     accuracys = []
     dbis = []
