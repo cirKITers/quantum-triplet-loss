@@ -3,28 +3,32 @@
 ## Fixed Parameters
 
 - Circuit, measurement and embedding
-- 4 qubits for 2 outputs, 6 quibts for 3 outputs
+- 12 qubits
+  - 2 outputs for cross-entropy loss
+  - 2 to 8 outputs for triplet loss
 - LR 0.005, Alpha 1.0 - both constant
-- Number of training steps 7500
+- Training steps
+  - 2000 for triplet loss
+  - 6000 for cross-entropy loss
 - Triplet choice completely random
 
 ## Tests
 
-### Tests mit positivem Effekt
-- ZZ Measurement auf Qubits 0,1 und 2,3
+### Tests with positive effect
+- ZZ measurement on qubits 0,1 and 2,3
 
-### Tests mit keinem Effekt
+### Tests without any effect
 - StronglyEntanglingLayers
-- Veränderung von Qubit- und Layer-Anzahl
-- Veränderung der LR (dynamisch und statisch) - 0,01 führt zu bestem Ergebnis
-- Veränderung des Alpha-Wertes 
-    - Je größer umso größer die Varianz der Messung
-    - Veränderung des Alpha-Wertes macht vorherige Steps überflüssig
-- 3 Qubits zum Auslesen
-- Ein separates Circuit pro Messung
+- Change of qubit- and layer count
+- Changes of learning rate (dynamic and static) – 0.01 leads to best result
+- Changes of alpha
+  - Bigger alpha values lead to bigger variances of measurements
+  - Changing the alpha value makes previous steps obsolete
+- Measuring 3 qubits
+- One separate circuit per measurement
 - Data-Reuploading
 
-### Tests mit negativem Effekt
-- Online Mining der Triplets (alles wird auf ein Wert abgebildet)
-- Erst normales Training, dann Online Mining
-- Jegliche Veränderung des Loss
+### Tests with negative effect
+- Online mining of triplets (everything is mapped to one value)
+- Usual training, followed by online mining
+- Change of loss
