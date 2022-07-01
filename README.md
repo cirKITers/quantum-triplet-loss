@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/430692221.svg)](https://zenodo.org/badge/latestdoi/430692221)
+
 # quantum-triplet-loss
 
 ## Fixed Parameters
