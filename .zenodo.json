@@ -1,0 +1,17 @@
+{
+    "creators": [
+        {
+            "orcid": "0000-0002-3289-8690",
+            "affiliation": "Karlsruhe Institute of Technology",
+            "name": "Wendenius, Christof"
+        },
+        {
+            "orcid": "0000-0002-8034-8837",
+            "affiliation": "Karlsruhe Institute of Technology",
+            "name": "Kuehn, Eileen"
+        }
+    ],
+    "title": "quantum-triplet-loss",
+    "description": "Accompanying code and datas for the paper on \"Training Parameterized Quantum Circuits with Triplet Loss\".",
+    "upload_type": "software"
+}
