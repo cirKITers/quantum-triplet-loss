@@ -26,7 +26,6 @@ Create a `hyperparameters.json` in the main directory with the desired values. A
     "shots": null,
     "seed": 1234
 }
-
 ```
 
 To reproduce the results from the paper, use "mnist_ae" or "moons" as the "dataset" parameter. 
