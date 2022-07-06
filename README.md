@@ -32,6 +32,30 @@ To reproduce the results from the paper, use `"mnist_ae"` or `"moons"` as the `"
 
 To start a Triplet Loss Training run `main.py`. To start a Cross Entropy Training run `classical_training.py`.
 
+## Parameters explanation
+
+| Parameter       | Explanation                                                                   |
+|-----------------|-------------------------------------------------------------------------------|
+| dataset         | Use `mnist_ae` or `moons` to reproduce the results from the paper.            |
+| qubits          | Number of qubits of the PQC.                                                  |
+| data_qubits     | On how many qubits the data is encoded. Might be fixed by the dataset choice. |
+| output_qubits   | Number of measured qubits. For CE it will always be the number of classes.    |
+| layers          | Number of layers of the PQC.                                                  |
+| train_size      | Number of training samples. Might be limited by the dataset choice.           |
+| test_size       | Number of test samples. Might be limited by the dataset choice.               |
+| classes         | Classes (digits) used for a training with MNIST dataset.                      |
+| steps           | Number of training steps.                                                     |
+| test_every      | After how many steps the test dataset is evaluated.                           |
+| grads_every     | After how many steps the gradients are printed.                               |
+| start_stepsize  | Initial stepsize of the optimizer.                                            |
+| update_sz_every | After how many steps the stepsize is updated (LR decay).                      |
+| sz_factor       | Which factor is used to update the stepsize (not used for the paper).         |
+| alpha           | Alpha value of the Triplet Loss.                                              |
+| shots           | Number of shots. null for mode.                                               |
+| seed            | Random seed.                                                                  |
+
+Note that only a few classes/features combinations are provided for the MNIST dataset. 
+
 ## Fixed Parameters
 
 - Circuit, measurement and embedding
