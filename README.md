@@ -28,7 +28,7 @@ Create a `hyperparameters.json` in the main directory with the desired values. A
 }
 ```
 
-To reproduce the results from the paper, use "mnist_ae" or "moons" as the "dataset" parameter. 
+To reproduce the results from the paper, use `"mnist_ae"` or `"moons"` as the `"dataset"` parameter. 
 
 To start a Triplet Loss Training run `main.py`. To start a Cross Entropy Training run `classical_training.py`.
 
