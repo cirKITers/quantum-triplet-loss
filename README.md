@@ -2,6 +2,37 @@
 
 # quantum-triplet-loss
 
+## How To Run
+
+Create a `hyperparameters.json` in the main directory with the desired values. A good start would be:
+
+```
+{
+    "dataset": "mnist_ae",
+    "qubits": 12,
+    "data_qubits": 8,
+    "output_qubits": 2,
+    "layers": 10,
+    "train_size": 2500,
+    "test_size": 500,
+    "classes": [3, 6],
+    "steps": 2000,
+    "test_every": 50,
+    "grads_every": 1,
+    "start_stepsize": 0.005,
+    "update_sz_every": 35000,
+    "sz_factor": 0.1,
+    "alpha": 1.0,
+    "shots": null,
+    "seed": 1234
+}
+
+```
+
+To reproduce the results from the paper, use "mnist_ae" or "moons" as the "dataset" parameter. 
+
+To start a Triplet Loss Training run `main.py`. To start a Cross Entropy Training run `classical_training.py`.
+
 ## Fixed Parameters
 
 - Circuit, measurement and embedding
