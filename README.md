@@ -27,9 +27,6 @@ Create a `hyperparameters.json` in the main directory with the desired values. A
     "seed": 1234
 }
 ```
-
-To reproduce the results from the paper, use `"mnist_ae"` or `"moons"` as the `"dataset"` parameter. 
-
 To start a Triplet Loss Training run `main.py`. To start a Cross Entropy Training run `classical_training.py`.
 
 ## Parameters explanation
@@ -51,7 +48,7 @@ To start a Triplet Loss Training run `main.py`. To start a Cross Entropy Trainin
 | update_sz_every | After how many steps the stepsize is updated (LR decay).                      |
 | sz_factor       | Which factor is used to update the stepsize (not used for the paper).         |
 | alpha           | Alpha value of the Triplet Loss.                                              |
-| shots           | Number of shots. null for mode.                                               |
+| shots           | Number of shots. `null` for analytic mode.                                    |
 | seed            | Random seed.                                                                  |
 
 Note that only a few classes/features combinations are provided for the MNIST dataset. 
