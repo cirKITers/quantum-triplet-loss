@@ -57,7 +57,7 @@ Note that only a few classes/features combinations are provided for the MNIST da
 
 The `mnist_ae` dataset was created by training an autoencoder on the popular MNIST dataset. Every created dataset that we used for the experiments of our paper are provided in the `quantum-triplet-loss/datasets/minst_ae` directory. 
 
-Lets look at the file `Train_[3,4,6,9]_features_8.npz` as an example. This dataset was created from the classes/digits 3, 4, 6 and 9, and every datapoint has 8 features. To use this dataset, you have to set `"data_qubits": 8` and `"classes": [3, 4, 6, 9]" in your `hyperparameters.json` file. The respective train and test set will be loaded automatically. 
+Lets look at the file `Train_[3,4,6,9]_features_8.npz` as an example. This dataset was created from the classes/digits 3, 4, 6 and 9, and every datapoint has 8 features. To use this dataset, you have to set `"data_qubits": 8` and `"classes": [3, 4, 6, 9]"` in your `hyperparameters.json` file. The respective train and test set will be loaded automatically. 
 
 
 ## Fixed Parameters
